@@ -1,13 +1,19 @@
 import psycopg2
 import psycopg2.extras
 from contextlib import contextmanager
-
+import os
 from config import DATABASE_URL
 
 
 @contextmanager
 def get_conn():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(
+        host=os.getenv("DB_HOST", "127.0.0.1"),
+        port=int(os.getenv("DB_PORT", "5432")),
+        dbname=os.getenv("DB_NAME", "lovebot"),
+        user=os.getenv("DB_USER", "postgres"),
+        password=os.getenv("DB_PASSWORD"),
+    )
     try:
         yield conn
     finally:
