@@ -111,7 +111,7 @@ def handle_pending(message: types.Message) -> None:
                 )
                 safe_who = html.escape(who, quote=False)
                 notif_text = (
-                    "🎁 <b>Новое желание в вашем общем списке!</b>\n\n"
+                    "🎁 <b>Новое желание в списке партнера!</b>\n\n"
                     f"<b>{safe_who}</b> добавил(а): "
                     f"<b>{safe_title}</b>"
                 )

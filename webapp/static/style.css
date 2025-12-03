@@ -1,0 +1,998 @@
+/* === БАЗА / ТЕМЫ (iOS-like) ====================================== */
+
+:root {
+  --bg: #f2f2f7;
+  --bg-soft: #f2f2f7;
+  --bg-card: #ffffff;
+  --bg-card-soft: #ffffff;
+  --accent: #0a84ff;
+  --accent-soft: rgba(10, 132, 255, 0.08);
+  --accent-strong: #007aff;
+  --danger: #ff3b30;
+  --danger-soft: rgba(255, 59, 48, 0.06);
+
+  --text-primary: #111827;
+  --text-muted: #6b7280;
+  --text-accent: #0a84ff;
+
+  --border-soft: #e5e5ea;
+
+  --radius-lg: 20px;
+  --radius-md: 12px;
+
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+/* голубая тема */
+body.theme-blue {
+  --bg: linear-gradient(135deg, #e5f4ff 0%, #b9e2ff 100%);;
+  --bg-soft: #f2f2f7;
+  --bg-card: #ffffff;
+  --bg-card-soft: #ffffff;
+  --accent: #0a84ff;
+  --accent-soft: rgba(10, 132, 255, 0.08);
+  --inactive: #89beff;
+  --accent-strong: #007aff;
+  --text-accent: #0a84ff;
+}
+
+/* розовая тема */
+body.theme-pink {
+  --bg: linear-gradient(135deg, #ffebf3 0%, #ffffff 100%);;
+  --bg-soft: #fff5f9;
+  --bg-card: #ffffff;
+  --bg-card-soft: #ffffff;
+  --accent: #ff2d55;
+  --accent-soft: rgba(255, 45, 85, 0.08);
+  --inactive: #ff9eb2;
+  --accent-strong: #ff2d55;
+  --text-accent: #ff2d55;
+}
+
+/* === ОБЩЕЕ =========================================== */
+
+/* контейнер над хедером */
+.tg-top-logo {
+  width: 100%;
+  height: 30%;
+  display: flex;
+  margin-bottom: 0px;
+  justify-content: center;
+  pointer-events: none; /* чтобы не мешал свайпу закрытия */
+}
+
+/* сам логотип */
+.tg-top-logo img {
+  height: 38px;        /* подгони под вкус */
+  opacity: 0.9;        /* слегка воздушно смотрится в верхней зоне */
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    system-ui, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  /*min-height: 100dvh; !* или 100dvh если хочешь: min-height: 100dvh; *!*/
+
+  /* учитываем вырез/верхнюю панель */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+body.tg-app .app-header {
+  margin-top: 12px;
+}
+
+.app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 12px 12px 100px; /* повыше таббар — больше отступ */
+}
+
+* {
+  touch-action: manipulation;
+}
+
+/* === ХЕДЕР + ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ ======================= */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.title-block h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  /*color: var(--inactive);*/
+  color: color-mix(in srgb, var(--inactive) 70%, var(--accent-strong)) !important;
+}
+
+/* одна кнопка-переключатель */
+
+.theme-switch {
+  display: flex;
+  align-items: center;
+}
+
+.theme-toggle-btn {
+  border: none;
+  outline: none;
+  /*background: #e5e5ea;*/
+  padding: 3px 10px 3px 4px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05) !important;
+  -webkit-appearance: none;
+  /*transition: background 0.18s ease, color 0.18s ease, opacity 0.12s ease;*/
+}
+
+.theme-toggle-btn {
+  background: rgba(255, 255, 255, 0.35) !important;   /* светлое стекло */
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+}
+
+/* фон завязан на тему */
+body.theme-blue .theme-toggle-btn {
+  background: rgba(10, 132, 255, 0.12);
+}
+
+body.theme-pink .theme-toggle-btn {
+  background: rgba(255, 45, 85, 0.12);
+}
+
+.theme-toggle-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* svg-иконка внутри кружка */
+.theme-toggle-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+  fill: var(--accent-strong);
+}
+
+/* по умолчанию оба path скрыты */
+.theme-icon-blue,
+.theme-icon-pink {
+  display: none;
+}
+
+/* включаем только нужный */
+body.theme-blue .theme-icon-blue {
+  display: block;
+}
+
+body.theme-pink .theme-icon-pink {
+  display: block;
+}
+
+/* текст — всегда в цвет темы */
+.theme-toggle-text {
+  padding-right: 2px;
+  color: var(--accent-strong);
+}
+
+/* === КАРТОЧКИ ========================================= */
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 14px 14px 12px;
+  margin-bottom: 10px;
+  /*border: 1px solid var(--border-soft);*/
+  /*box-shadow: var(--shadow-soft);*/
+  border: 1px solid var(--accent-soft);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.card-plain {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 10px;
+  box-shadow: none;
+}
+
+.card h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.accent-text {
+  color: var(--text-accent);
+}
+
+/* === ТЕКСТ ============================================ */
+
+h1, h2 {
+  margin: 0 0 8px;
+}
+
+p {
+  margin: 4px 0;
+}
+
+.pair-line {
+  margin: 4px 0;
+  font-size: 15px;
+}
+
+.pair-sub {
+  margin: 0 0 6px 26px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.emoji {
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.small {
+  font-size: 12px;
+  margin-bottom: 12px;
+  margin-top: 12px;
+}
+
+/* === СПИСКИ =========================================== */
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+
+li {
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--accent-soft);
+}
+
+li:last-child {
+  border-bottom: none;
+}
+
+.wish-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wish-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hr-rel {
+  border: 0;
+  height: 0.8px;
+  background-color: var(--accent-soft);
+  margin: 8px auto;
+  width: 100%;
+
+}
+
+.wish-title {
+  font-size: 14px;
+}
+
+.wish-title strong {
+  font-weight: 600;
+}
+
+.wish-delete-icon {
+  border: none;
+  background: transparent;
+  color: #b0b3c0;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  width: auto;
+  padding: 2px 4px;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+.wish-delete-icon:hover {
+  color: #ff3b30;
+}
+
+.wish-title-done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.wish-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.wish-link {
+  font-size: 12px;
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.wish-add-link,
+.wish-delete {
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  float: right;
+  width: fit-content;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.wish-add-link {
+  color: var(--accent-strong);
+}
+
+.wl-link-btn {
+  float: right;
+  height: fit-content;
+  width: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
+.wish-add-link:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+
+.wish-delete:hover {
+  background: var(--danger-soft);
+}
+
+.wish-done-marker {
+  font-size: 14px;
+}
+
+/* === ИНПУТЫ / КНОПКИ ================================== */
+
+input[type="text"] {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 50px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: var(--text-primary);
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  font-size: 14px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+input[type="text"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.15);
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 50px;
+  border: none;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease, transform 0.08s ease;
+  -webkit-appearance: none;
+}
+
+button:hover {
+  opacity: 0.96;
+}
+
+/* красная кнопка */
+
+.btn-danger:hover {
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-danger:active {
+  transform: none;
+}
+
+/* АКТИВНЫЙ — цвет темы (и текст, и иконка) */
+.btn-danger.btn-danger-active {
+  color: var(--accent-strong);
+}
+
+.btn-danger {
+  width: auto;
+  flex: 1;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent-strong);
+  float: right;
+  box-shadow: none;
+  text-transform: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* вторичные кнопки */
+.btn-secondary {
+  /*background: #ffffff;*/
+  /*color: var(--text-primary);*/
+  border: 1px solid var(--accent-soft);
+  /*width: auto;*/
+  /*padding: 7px 12px;*/
+  /*font-size: 13px;*/
+  /*font-weight: 500;*/
+  width: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+}
+
+/* ссылки */
+.cloud-link,
+.partner-link {
+  color: var(--accent-strong);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.container-danger {
+  display: inline-flex;
+  align-items: center;
+  height: 1em; /* высота строки текста */
+  vertical-align: middle;
+  float: right;
+  transform: scale(0.7);
+}
+
+#clear-my-wishlist-btn {
+  transform: scale(1.25);
+}
+
+/* строки с двумя колонками */
+.row {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.row input[type="text"] {
+  margin-bottom: 0;
+}
+
+/* === ТАБЫ ============================================= */
+
+.tabs {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: #e5e5ea;
+  margin-bottom: 10px;
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: rgba(107, 114, 128, 0.66);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+  box-shadow: none;
+  width: auto;
+}
+
+.tab.active {
+  background: #ffffff;
+  color: var(--accent-strong);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.add-form {
+  margin-top: 10px;
+}
+
+/* === ОШИБКИ =========================================== */
+
+.error {
+  color: #ff3b30;
+  font-size: 13px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #ffeef0;
+  border: 1px solid #ffccd0;
+}
+
+/* === НИЖНИЙ ТАББАР С ИКОНКАМИ ========================= */
+
+/* таббар остаётся как был по размеру/фону */
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;                 /* приподняли над краем экрана */
+  transform: translateX(-50%);
+  max-width: 320px;             /* ширина овала, подгони по вкусу */
+  width: calc(100% - 40px);     /* чтобы на маленьких экранах тоже влезало */
+
+  padding: 6px;                 /* внутренний отступ — рамка овала */
+  /*background: color-mix(in srgb, var(--inactive) 20%, transparent);*/
+  border-radius: 999px;         /* ОВАЛ */
+  border: 1px solid var(--accent-soft);
+
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  /* убираем «линейку» сверху, она в овале не нужна */
+  /* border-top: 1.5px solid var(--accent-soft);  — удалить */
+
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.bottom-nav {
+  background: rgba(255, 255, 255, 0.35);   /* светлое стекло */
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+/* кнопки таббара */
+
+.nav-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: none;
+  background: transparent !important;
+  color: var(--inactive);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: none;
+  text-transform: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* только активная вкладка чуть подсвечивается */
+.nav-btn.active {
+  background: rgba(255, 255, 255, 0.95);  /* «пузырёк» внутри овала */
+  color: var(--accent-strong);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* иконка берёт цвет из currentColor */
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: transparent;
+}
+
+.nav-label {
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.nav-btn {
+  -webkit-tap-highlight-color: transparent; /* iOS Safari / Telegram */
+  -webkit-touch-callout: none;
+}
+
+
+
+/* когда клавиатура открыта — спрятать таббар вниз */
+
+body.keyboard-open .bottom-nav {
+  transform: translate(-50%, 100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-btn:hover {
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.nav-btn:active {
+  transform: none;
+}
+
+/* АКТИВНЫЙ — цвет темы (и текст, и иконка) */
+.nav-btn.active {
+  color: var(--accent-strong);
+}
+
+
+
+/* === WISHLIST В СТИЛЕ iOS ==================================== */
+
+.wishlist-card {
+  padding-top: 12px;
+}
+
+.wishlist-header h2 {
+  margin-bottom: 2px;
+}
+
+.wishlist-subtitle {
+  font-size: 13px;
+}
+
+/* tabs уже есть, чуть подправим отступы для wishlist */
+
+.wishlist-tabs {
+  margin-top: 10px;
+  margin-bottom: 12px;
+  background: var(--accent-soft)
+}
+
+/* Группа ячеек (как в Settings) */
+
+.wl-group {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 0 0 0.8px var(--accent-soft);
+  overflow: hidden;
+}
+
+/* список внутри группы */
+
+.wl-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: var(--accent-soft);
+}
+
+/* одна ячейка желания */
+
+.wl-item {
+  padding: 10px 14px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* разделитель между ячейками */
+
+.wl-item + .wl-item {
+  border-top: 0.5px solid var(--accent-soft);
+}
+
+/* основная строка: статус + текст + действие */
+
+.wl-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* круглый индикатор слева */
+
+.wl-status-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  color: rgba(107, 114, 128, 0.9);
+  background: #f9fafb;
+}
+
+.wl-item-done .wl-status-dot {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.6);
+  color: #22c55e;
+}
+
+/* текстовая часть */
+
+.wl-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.wl-title {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.wl-title.wish-title-done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.wl-subtitle-line {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* правое действие (кнопка удалить для своего списка) */
+
+.wl-side-action {
+  margin-left: 8px;
+}
+
+.wl-delete-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 0 4px 8px;
+  font-size: 13px;
+  color: #ff3b30;
+  cursor: pointer;
+  box-shadow: none;
+  width: auto;
+}
+
+/* нижняя строка с ссылкой / кнопкой "добавить ссылку" */
+
+.wl-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+/* переиспользуем уже существующие классы wish-link / wish-add-link,
+   просто подстраиваем стиль под iOS */
+
+.wl-footer .wish-link {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+
+.wl-footer .wish-add-link:hover {
+  background: #e5e7eb;
+}
+
+/* пустой список */
+
+.wl-empty {
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+/* форма добавления */
+
+.wl-add-form {
+  margin-top: 14px;
+}
+
+.wl-add-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.wl-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.wl-add-row input[type="text"] {
+  margin-bottom: 0;
+  border-radius: 50px;
+}
+
+.wl-add-btn {
+  width: min-content;
+  padding-inline: 14px;
+  border-radius: 50px;
+}
+
+/* для партнёрского списка нет кнопки удалить,
+   так что ячейки чуть проще, но используют те же классы */
+
+.wishlist-block {
+  margin-top: 6px;
+}
+
+/* Убираем highlight, тень, фокус полностью */
+.nav-btn,
+.nav-btn * {
+  -webkit-tap-highlight-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+/* Убираем hover вообще для таббара */
+.nav-btn:hover,
+.nav-btn:hover * {
+  background: transparent !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+/* Убираем focus */
+.nav-btn:focus,
+.nav-btn:focus-visible,
+.nav-btn:focus-within,
+.nav-btn:focus *,
+.nav-btn:focus-visible *,
+.nav-btn:focus-within * {
+  outline: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+/* Убираем active */
+.nav-btn:active,
+.nav-btn:active * {
+  background: transparent !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+
+/* === ПРОЧЕЕ =========================================== */
+
+@supports (-webkit-touch-callout: none) {
+  #startdate-save-btn,
+  #cloud-save-btn,
+  input[type="text"] {
+    font-size: 16px;
+  }
+}
+
+button,
+input,
+textarea {
+  touch-action: manipulation;
+}
+
+.user-ref {
+  text-underline: none;
+  text-underline-style: none;
+  text-decoration: none;
+  color: var(--text-accent);
+}
+
+.main-title {
+  color: var(--accent-strong);
+}
+
+.app-title {
+  color: var(--accent-strong);
+  font-size: 2em !important;
+}
+
+.hidden {
+  display: none;
+}
+
+#cloud-open-btn.wl-link-btn {
+  width: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08) !important;
+}
+
+.wishlist-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wishlist-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+@media (max-width: 360px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (hover: none) {
+  .nav-btn:hover {
+    background: transparent !important;
+    opacity: 1 !important;
+  }
+}

@@ -9,7 +9,7 @@ from datetime import date
 import secrets
 from typing import Any, Dict, List, Optional
 
-from db import fetchone, fetchall, execute, execute_returning_one
+from tgbot.db import fetchone, fetchall, execute, execute_returning_one
 
 
 # ===== Пользователи и пары =====
