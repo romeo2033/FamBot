@@ -10,7 +10,10 @@ from typing import Dict, Optional, Union
 import telebot
 from telebot import types
 
-from config import BOT_TOKEN
+try:
+    from config import BOT_TOKEN
+except ModuleNotFoundError:
+    from tgbot.config import BOT_TOKEN
 
 
 # === Экземпляр бота ===

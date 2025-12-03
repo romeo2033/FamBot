@@ -2,7 +2,10 @@ import psycopg2
 import psycopg2.extras
 from contextlib import contextmanager
 import os
-from config import DATABASE_URL
+try:
+    from config import DATABASE_URL
+except ModuleNotFoundError:
+    from tgbot.config import DATABASE_URL
 
 
 @contextmanager
