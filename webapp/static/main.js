@@ -50,11 +50,29 @@
     // svg-пути в кружке переключаются через CSS по body.theme-*
   }
 
+  const THEME_BG_COLOR = {
+    blue: "#e5f4ff",
+    pink: "#ffebf3",
+  };
+
   function applyTheme(theme) {
     const normalized = theme === "pink" ? "pink" : "blue";
+    const bgColor = THEME_BG_COLOR[normalized];
 
     document.body.classList.remove("theme-blue", "theme-pink");
     document.body.classList.add("theme-" + normalized);
+
+    // html-фон совпадает с верхним цветом градиента — при overscroll не видно Telegram
+    document.documentElement.style.background = bgColor;
+
+    // Telegram рисует свой фон за WebApp — говорим ему использовать наш цвет
+    if (tg && typeof tg.setBackgroundColor === "function") {
+      tg.setBackgroundColor(bgColor);
+    }
+    // сверху при overscroll просвечивает headerColor, поэтому его тоже меняем
+    if (tg && typeof tg.setHeaderColor === "function") {
+      tg.setHeaderColor(bgColor);
+    }
 
     updateThemeToggleUI(normalized);
     saveTheme(normalized);
@@ -76,8 +94,8 @@
   if (tg && typeof tg.expand === "function") {
     tg.expand();
   }
-  if (tg && typeof tg.expand === "function") {
-    tg.expand();
+  if (tg && typeof tg.disableVerticalSwipes === "function") {
+    tg.disableVerticalSwipes();
   }
 
   // помечаем, что запущено внутри Telegram WebApp

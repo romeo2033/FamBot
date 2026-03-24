@@ -73,6 +73,10 @@ body.theme-pink {
   box-sizing: border-box;
 }
 
+html {
+  background: #e5f4ff; /* fallback — перезаписывается JS при смене темы */
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
