@@ -2,6 +2,21 @@
   const tg = window.Telegram?.WebApp || null;
   const user = tg?.initDataUnsafe?.user || null;
 
+  function haptic(type = "medium") {
+  // Telegram haptics (лучший вариант)
+  const hf = tg?.HapticFeedback;
+  if (hf) {
+    if (type === "select") return hf.selectionChanged();
+    if (type === "success" || type === "error" || type === "warning") {
+      return hf.notificationOccurred(type);
+    }
+    return hf.impactOccurred(type); // light | medium | heavy | rigid | soft
+  }
+
+  // fallback для браузера (в основном Android)
+  if (navigator.vibrate) navigator.vibrate(15);
+}
+
   // === ТЕМЫ (blue / pink) =====================================
 
   const THEME_KEY = "fambot_theme";
@@ -113,9 +128,15 @@
   }
 
   if (window.visualViewport) {
-    window.visualViewport.addEventListener("resize", updateKeyboardState);
+    window.visualViewport.addEventListener("resize", () => {
+      updateKeyboardState();
+      updateWishlistScrollHeights();
+    });
   } else {
-    window.addEventListener("resize", updateKeyboardState);
+    window.addEventListener("resize", () => {
+      updateKeyboardState();
+      updateWishlistScrollHeights();
+    });
   }
 
   // === DOM-ЭЛЕМЕНТЫ ============================================
@@ -129,6 +150,10 @@
   const navWishlistBtn = document.querySelector(
     '.nav-btn[data-page="wishlist"]'
   );
+
+  document.querySelectorAll(".bottom-nav .nav-btn").forEach((btn) => {
+  btn.addEventListener("click", () => haptic("select"));
+});
 
   // элементы пары / дат / облака
   const pairCard = document.getElementById("pair-card");
@@ -151,6 +176,11 @@
   const startdateEditBtn = document.getElementById("startdate-edit-btn");
   const startdateInput = document.getElementById("startdate-input");
   const startdateSaveBtn = document.getElementById("startdate-save-btn");
+
+  // редактирование отображаемого имени партнёра
+  const partnerNameEditBtn = document.getElementById("partner-name-edit-btn");
+  const partnerNameForm = document.getElementById("partner-name-form");
+  const partnerNameInput = document.getElementById("partner-name-input");
 
   // редактирование облака
   const cloudEditBtn = document.getElementById("cloud-edit-btn");
@@ -181,6 +211,27 @@
   const titleInput = document.getElementById("title-input");
 
   const deletePairBtn = document.getElementById("delete-pair-btn");
+
+  const exportWishlistBtn = document.getElementById("export-wishlist-btn");
+
+  function updateWishlistScrollHeights() {
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    const bottomNavHeight = bottomNav ? bottomNav.offsetHeight + 26 : 0;
+
+    const fitBlock = (block) => {
+      if (!block) return;
+      const group = block.querySelector(".wl-group");
+      if (!group) return;
+
+      const rect = block.getBoundingClientRect();
+      const freeHeight = viewportHeight - rect.top - bottomNavHeight - 16;
+      const maxHeight = Math.max(140, Math.floor(freeHeight));
+      group.style.maxHeight = `${maxHeight}px`;
+    };
+
+    fitBlock(myListBlock);
+    fitBlock(partnerListBlock);
+  }
 
   // === STATE ====================================================
 
@@ -225,6 +276,15 @@
     return div.innerHTML;
   }
 
+  function getPartnerDisplayName() {
+    const baseName =
+      state.partner?.first_name ||
+      state.partner?.username ||
+      "Партнёр";
+    const alias = state.pair?.partner_alias;
+    return alias && alias.trim() ? alias.trim() : baseName;
+  }
+
   function openLink(url) {
     if (!url) return;
     try {
@@ -232,6 +292,31 @@
     } catch (e) {
       console.error(e);
     }
+  }
+
+  function openTelegramLink(url) {
+    if (!url) return;
+    try {
+      if (tg && typeof tg.openTelegramLink === "function") {
+        tg.openTelegramLink(url);
+        return;
+      }
+      window.open(url, "_blank");
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function buildPartnerDiscussLink(item) {
+    const partnerUsername = state.partner?.username;
+    if (!partnerUsername) return null;
+
+    const title = item?.title || "Без названия";
+    const link = item?.url || "не указана";
+    const text = `🎁 Хочу обсудить подарок: ${title}\nСсылка: ${link}`;
+    return `https://t.me/${encodeURIComponent(partnerUsername)}?text=${encodeURIComponent(
+      text
+    )}`;
   }
 
   // === ТАБЫ / НАВИГАЦИЯ =========================================
@@ -250,6 +335,8 @@
       navMainBtn.classList.add("active");
       navWishlistBtn.classList.remove("active");
     }
+
+    requestAnimationFrame(updateWishlistScrollHeights);
   }
 
   if (navMainBtn) {
@@ -312,10 +399,7 @@
     wishlistCard.classList.remove("hidden");
 
     if (state.partner && state.partner.id) {
-      const name =
-        state.partner.first_name ||
-        state.partner.username ||
-        "Партнёр";
+      const name = getPartnerDisplayName();
       const partnerUsername =
           state.partner.username ||
           "t.me";
@@ -407,6 +491,7 @@
   function makeWishlistItemHTML(item, canEdit) {
     const titleHtml = sanitizeText(item.title || "");
     const hasLink = !!item.url;
+    const discussUrl = !canEdit ? buildPartnerDiscussLink(item) : null;
 
     const linkPart = hasLink
       ? `<button class="wl-link-btn" data-url="${encodeURI(
@@ -420,6 +505,10 @@
       ? `<br><button class="wish-delete" type="button" aria-label="Удалить">Удалить</button>`
       : "";
 
+    const discussPart = discussUrl
+      ? `<button class="wl-chat-btn" data-chat-url="${discussUrl}">Обсудить</button>`
+      : "";
+
     return `
       <div class="wl-main">
         <div class="wl-text">
@@ -428,6 +517,7 @@
         </div>
         <div class="wl-actions">
           ${linkPart}
+          ${discussPart}
           ${editPart}
         </div>
       </div>
@@ -475,6 +565,8 @@
         partnerWishlistEl.appendChild(li);
       });
     }
+
+    requestAnimationFrame(updateWishlistScrollHeights);
   }
 
   // === API-ХЕЛПЕР ===============================================
@@ -543,6 +635,7 @@
       myListBlock.classList.remove("hidden");
       partnerListBlock.classList.add("hidden");
       renderTabs();
+      requestAnimationFrame(updateWishlistScrollHeights);
     });
   }
 
@@ -551,6 +644,7 @@
       myListBlock.classList.add("hidden");
       partnerListBlock.classList.remove("hidden");
       renderTabs();
+      requestAnimationFrame(updateWishlistScrollHeights);
     });
   }
 
@@ -572,6 +666,29 @@
       }
     });
   }
+
+  function getCurrentWishlistTarget() {
+    if (!myListBlock || !partnerListBlock) return "me";
+    return myListBlock.classList.contains("hidden") ? "partner" : "me";
+  }
+
+  if (exportWishlistBtn) {
+  exportWishlistBtn.addEventListener("click", async () => {
+    const target = getCurrentWishlistTarget(); // "me" | "partner"
+
+    try {
+      await apiPost("/api/wishlist/send_to_bot", {
+        user,
+        target,
+      });
+      haptic("success");
+    } catch (e) {
+      console.error(e);
+      showError("Не удалось отправить список в бот: " + e.message);
+      haptic("error");
+    }
+  });
+}
 
   // клики по моему wishlist
   if (myWishlistEl) {
@@ -616,6 +733,19 @@
   // клики по wishlist партнёра (открытие ссылок)
   if (partnerWishlistEl) {
     partnerWishlistEl.addEventListener("click", (e) => {
+      const chatBtn = e.target.closest(".wl-chat-btn");
+      if (chatBtn) {
+        const chatUrl = chatBtn.dataset.chatUrl;
+        if (!chatUrl) {
+          showError("У партнера нет @username, не могу открыть личный чат.");
+          haptic("warning");
+          return;
+        }
+        openTelegramLink(chatUrl);
+        haptic("success");
+        return;
+      }
+
       const btn = e.target.closest(".wl-link-btn");
       if (!btn) return;
       const url = btn.dataset.url;
@@ -699,6 +829,42 @@
         else msg += e.message;
         showError(msg);
       }
+    });
+  }
+
+  // отображаемое имя партнёра (без изменения ссылки на чат)
+  if (partnerNameEditBtn && partnerNameForm && partnerNameInput) {
+    partnerNameEditBtn.addEventListener("click", () => {
+      partnerNameForm.classList.toggle("hidden");
+      if (!partnerNameForm.classList.contains("hidden")) {
+        partnerNameInput.value = getPartnerDisplayName();
+        partnerNameInput.focus();
+      }
+    });
+  }
+
+  if (partnerNameForm && partnerNameInput) {
+    partnerNameForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const alias = partnerNameInput.value.trim();
+      if (!state.partner?.id) {
+        showError("Партнёр не найден.");
+        return;
+      }
+      try {
+        const data = await apiPost("/api/partner_alias/set", {
+          user,
+          alias,
+        });
+        if (!state.pair) state.pair = {};
+        state.pair.partner_alias = data.alias || null;
+      } catch (err) {
+        console.error(err);
+        showError("Не удалось сохранить имя партнёра: " + err.message);
+        return;
+      }
+      renderPairBlock();
+      partnerNameForm.classList.add("hidden");
     });
   }
 

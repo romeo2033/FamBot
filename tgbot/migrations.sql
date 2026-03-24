@@ -14,9 +14,17 @@ CREATE TABLE IF NOT EXISTS pairs (
     invite_token        VARCHAR(64) UNIQUE NOT NULL,
     start_date          DATE,
     cloud_drive_url     TEXT,
+    creator_partner_alias TEXT,
+    partner_partner_alias TEXT,
     last_milestone_days INT NOT NULL DEFAULT 0,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE pairs
+    ADD COLUMN IF NOT EXISTS creator_partner_alias TEXT;
+
+ALTER TABLE pairs
+    ADD COLUMN IF NOT EXISTS partner_partner_alias TEXT;
 
 CREATE TABLE IF NOT EXISTS wishlist_items (
     id              SERIAL PRIMARY KEY,

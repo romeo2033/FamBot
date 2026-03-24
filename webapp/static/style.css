@@ -390,6 +390,22 @@ li:last-child {
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
 }
 
+.wl-chat-btn {
+  float: right;
+  margin-right: 4px;
+  height: fit-content;
+  width: auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-soft);
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+
 .wish-add-link:hover {
   background: rgba(0, 0, 0, 0.04);
 }
@@ -719,7 +735,10 @@ body.keyboard-open .bottom-nav {
   background: #ffffff;
   border-radius: 14px;
   box-shadow: 0 0 0 0.8px var(--accent-soft);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* список внутри группы */
@@ -883,6 +902,7 @@ body.keyboard-open .bottom-nav {
 
 .wishlist-block {
   margin-top: 6px;
+  min-height: 0;
 }
 
 /* Убираем highlight, тень, фокус полностью */

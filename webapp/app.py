@@ -1,22 +1,29 @@
 # webapp/app.py
 from __future__ import annotations
 
+import os
+import sys
+
+# Ensure project root is importable when running `python webapp/app.py`.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.append(BASE_DIR)
+
 from telebot import types  # если хочешь ещё и клавиатуру
 from tgbot.bot_setup import bot  # тот же bot, что и в handlers
 import html
 
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, Optional, List
-import os
-import sys
 
 from flask import Flask, render_template, request, jsonify
 from psycopg2.extras import RealDictRow
 
-# --- чтобы видеть bot/* модули ---
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if BASE_DIR not in sys.path:
-    sys.path.append(BASE_DIR)
+from io import BytesIO
+from flask import send_file
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, Alignment
 
 from tgbot.services import (  # type: ignore
     get_or_create_user,
@@ -25,6 +32,8 @@ from tgbot.services import (  # type: ignore
     add_wishlist_item,
     set_pair_cloud_url,
     set_pair_start_date,
+    get_partner_alias_for_user,
+    set_partner_alias_for_user,
 )
 from tgbot.db import fetchone, execute  # type: ignore
 from tgbot.config import BOT_USERNAME  # type: ignore
@@ -220,6 +229,84 @@ def notify_partner_about_new_wish(pair, user_id: int, title: str) -> None:
         bot.send_message(tg_id, notif_text, reply_markup=None, parse_mode="HTML")
     except Exception as e:
         print(f"Failed to send wishlist notification from webapp: {e}")
+
+from io import BytesIO
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, Alignment
+
+
+def build_wishlist_xlsx(items: list[dict], sheet_name: str = "Wishlist") -> BytesIO:
+    wb = Workbook()
+    ws = wb.active
+    ws.title = sheet_name[:31]  # Excel limit
+
+    headers = ["Желание", "Ссылка", "Создано"]
+    ws.append(headers)
+
+    header_font = Font(bold=True)
+    for col in range(1, len(headers) + 1):
+        c = ws.cell(row=1, column=col)
+        c.font = header_font
+        c.alignment = Alignment(vertical="center")
+
+    for r in items:
+        created_at = r.get("created_at")
+        ws.append(
+            [
+                r.get("title") or "",
+                r.get("url") or "",
+                (created_at.strftime("%d.%m.%Y") if created_at else ""),
+            ]
+        )
+
+    # простая авто-ширина
+    for col in range(1, len(headers) + 1):
+        max_len = 10
+        for row in range(1, ws.max_row + 1):
+            v = ws.cell(row=row, column=col).value
+            if v is None:
+                continue
+            max_len = max(max_len, len(str(v)))
+        ws.column_dimensions[get_column_letter(col)].width = min(max_len + 2, 60)
+
+    bio = BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    # telebot любит, когда у файла есть name
+    bio.name = "wishlist.xlsx"
+    return bio
+
+from tgbot.db import fetchall  # если есть
+
+def send_wishlist_to_bot(pair: dict, owner_user_id: int, receiver_user_id: int, title: str = "Список желаний") -> None:
+    """
+    owner_user_id  — чей список выгружаем (my list или partner list)
+    receiver_user_id — кому в Telegram отправляем файл (обычно текущему юзеру)
+    """
+    receiver = fetchone(
+        "SELECT telegram_id, first_name, username FROM users WHERE id = %s",
+        (receiver_user_id,),
+    )
+    if not receiver or not receiver.get("telegram_id"):
+        return
+
+    tg_id = receiver["telegram_id"]
+
+    items = fetchall(
+        """
+        SELECT title, url, created_at
+        FROM wishlist_items
+        WHERE pair_id = %s AND owner_user_id = %s
+        ORDER BY created_at DESC
+        """,
+        (pair["id"], owner_user_id),
+    )
+
+    xlsx = build_wishlist_xlsx(items, sheet_name=title)
+
+    caption = f"📄 {title}\nВсего: {len(items)}"
+    bot.send_document(tg_id, xlsx, caption=caption)
 # ===== Маршруты =====
 
 
@@ -285,6 +372,7 @@ def api_init():
 
     # линк на диск
     cloud_url = pair.get("cloud_drive_url")
+    partner_alias = get_partner_alias_for_user(pair, user_id)
 
 
 
@@ -298,6 +386,7 @@ def api_init():
                 "start_date": serialize_date(pair.get("start_date")),
                 "start_stats": start_stats,
                 "cloud_url": cloud_url,
+                "partner_alias": partner_alias,
             },
             "partner": {
                 "id": partner_id,
@@ -395,6 +484,42 @@ def api_wishlist_set_link():
 
     return jsonify({"ok": True})
 
+@app.post("/api/wishlist/send_to_bot")
+def api_wishlist_send_to_bot():
+    data = request.json or {}
+
+    user_id, pair, err_resp, err_code = get_current_user_and_pair(data)
+    if err_resp is not None:
+        return err_resp, err_code
+    if not pair:
+        return jsonify({"ok": False, "error": "NO_PAIR"}), 400
+
+    # что отправляем: мой список или список партнёра
+    target = (data.get("target") or "me").strip()  # "me" | "partner"
+
+    if target == "partner":
+        # чей список выгружаем — партнёра
+        if pair["creator_user_id"] == user_id:
+            owner_user_id = pair["partner_user_id"]
+        else:
+            owner_user_id = pair["creator_user_id"]
+        title = "Список партнёра"
+    else:
+        # мой список
+        owner_user_id = user_id
+        title = "Мой список"
+
+    if not owner_user_id:
+        return jsonify({"ok": False, "error": "NO_PARTNER"}), 400
+
+    try:
+        # отправляем файл тому, кто нажал кнопку (user_id)
+        send_wishlist_to_bot(pair, owner_user_id=owner_user_id, receiver_user_id=user_id, title=title)
+    except Exception as e:
+        print(f"Failed to send wishlist xlsx to bot: {e}")
+        return jsonify({"ok": False, "error": "SEND_FAILED"}), 500
+
+    return jsonify({"ok": True})
 
 @app.post("/api/wishlist/toggle_done")
 def api_wishlist_toggle_done():
@@ -447,6 +572,26 @@ def api_cloud_set():
     set_pair_cloud_url(pair["id"], url or None)
 
     return jsonify({"ok": True})
+
+
+@app.post("/api/partner_alias/set")
+def api_partner_alias_set():
+    """
+    Установить/обновить отображаемое имя партнёра для текущего пользователя.
+    JSON: { "user": {...}, "alias": "..." }
+    """
+    data = request.json or {}
+    alias_raw = (data.get("alias") or "").strip()
+    alias = alias_raw[:64] if alias_raw else None
+
+    user_id, pair, err_resp, err_code = get_current_user_and_pair(data)
+    if err_resp is not None:
+        return err_resp, err_code
+    if not pair:
+        return jsonify({"ok": False, "error": "NO_PAIR"}), 400
+
+    set_partner_alias_for_user(pair, user_id, alias)
+    return jsonify({"ok": True, "alias": alias})
 
 
 @app.post("/api/startdate/set")

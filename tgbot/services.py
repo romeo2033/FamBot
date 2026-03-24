@@ -116,6 +116,27 @@ def set_pair_cloud_url(pair_id: int, url: str) -> None:
     )
 
 
+def get_partner_alias_for_user(pair: Dict[str, Any], user_id: int) -> Optional[str]:
+    """Вернуть пользовательский алиас имени партнёра для текущего участника пары."""
+    if pair["creator_user_id"] == user_id:
+        return pair.get("creator_partner_alias")
+    return pair.get("partner_partner_alias")
+
+
+def set_partner_alias_for_user(pair: Dict[str, Any], user_id: int, alias: Optional[str]) -> None:
+    """Сохранить алиас имени партнёра для текущего участника пары."""
+    if pair["creator_user_id"] == user_id:
+        execute(
+            "UPDATE pairs SET creator_partner_alias = %s WHERE id = %s",
+            (alias, pair["id"]),
+        )
+    else:
+        execute(
+            "UPDATE pairs SET partner_partner_alias = %s WHERE id = %s",
+            (alias, pair["id"]),
+        )
+
+
 def get_or_create_invite_for_user(user_id: int) -> Dict[str, Any]:
     """
     Получить действующий инвайт для пользователя,
