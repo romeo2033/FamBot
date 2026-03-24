@@ -975,7 +975,7 @@ textarea {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 #cloud-open-btn.wl-link-btn {
@@ -990,9 +990,45 @@ textarea {
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08) !important;
 }
 
+.wl-tabs-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.wl-filter-btn {
+  flex: 0 0 28px !important;
+  width: 28px !important;
+  height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1.5px solid var(--accent-strong);
+  background: transparent;
+  color: var(--accent-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+  margin-left: auto;
+}
+
+.wl-filter-btn .nav-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.wl-filter-btn.wl-filter-active {
+  opacity: 1;
+}
+
 .wl-sort-bar {
   display: flex;
   gap: 6px;
+  margin-top: 8px;
   margin-bottom: 10px;
 }
 

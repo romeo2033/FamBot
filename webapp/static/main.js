@@ -1046,6 +1046,8 @@
   const sortDateBtn = document.getElementById("sort-date-btn");
   const sortTitleBtn = document.getElementById("sort-title-btn");
   const sortPriorityBtn = document.getElementById("sort-priority-btn");
+  const filterToggleBtn = document.getElementById("filter-toggle-btn");
+  const sortBar = document.querySelector(".wl-sort-bar");
 
   function updateSortUI() {
     [sortDateBtn, sortTitleBtn, sortPriorityBtn].forEach((btn) => {
@@ -1058,6 +1060,12 @@
     });
   }
 
+  function closeSortBar() {
+    if (!sortBar) return;
+    sortBar.classList.add("hidden");
+    if (filterToggleBtn) filterToggleBtn.classList.remove("wl-filter-active");
+  }
+
   function handleSortClick(field) {
     if (sortField === field) {
       sortDir = sortDir === "asc" ? "desc" : "asc";
@@ -1068,6 +1076,20 @@
     updateSortUI();
     renderWishlist();
     haptic("select");
+    closeSortBar();
+  }
+
+  if (filterToggleBtn && sortBar) {
+    filterToggleBtn.addEventListener("click", () => {
+      const isOpen = !sortBar.classList.contains("hidden");
+      if (isOpen) {
+        closeSortBar();
+      } else {
+        sortBar.classList.remove("hidden");
+        filterToggleBtn.classList.add("wl-filter-active");
+      }
+      haptic("light");
+    });
   }
 
   if (sortDateBtn) sortDateBtn.addEventListener("click", () => handleSortClick("date"));
