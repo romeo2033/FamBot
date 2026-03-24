@@ -243,6 +243,46 @@
     partner_wishlist: [],
   };
 
+  let sortField = "priority";
+  let sortDir = "desc";
+
+  const PRIORITY_ORDER = { high: 3, medium: 2, low: 1 };
+
+  function cmpPriority(a, b) {
+    return (PRIORITY_ORDER[b.priority] || 2) - (PRIORITY_ORDER[a.priority] || 2);
+  }
+
+  function cmpTitle(a, b) {
+    const ta = (a.title || "").toLowerCase();
+    const tb = (b.title || "").toLowerCase();
+    return ta < tb ? -1 : ta > tb ? 1 : 0;
+  }
+
+  function cmpDate(a, b) {
+    const da = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const db = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return db - da; // новые первыми по умолчанию
+  }
+
+  function sortedWishlist(list) {
+    const ORDER = {
+      priority: [cmpPriority, cmpTitle, cmpDate],
+      title:    [cmpTitle, cmpPriority, cmpDate],
+      date:     [cmpDate, cmpPriority, cmpTitle],
+    };
+    const comparators = ORDER[sortField] || ORDER.priority;
+
+    return [...list].sort((a, b) => {
+      for (let i = 0; i < comparators.length; i++) {
+        let cmp = comparators[i](a, b);
+        // направление применяется только к первичному полю
+        if (i === 0) cmp = sortDir === "asc" ? -cmp : cmp;
+        if (cmp !== 0) return cmp;
+      }
+      return 0;
+    });
+  }
+
   // === УТИЛИТЫ ==================================================
 
   function showError(msg) {
@@ -488,10 +528,19 @@
 
   // === WISHLIST РЕНДЕР ==========================================
 
+  const PRIORITY_COLORS = { high: "#ff3b30", medium: "#34c759", low: "#007aff" };
+  const PRIORITY_LABELS = { high: "Очень хочу", medium: "Хочу", low: "Несрочно" };
+
   function makeWishlistItemHTML(item, canEdit) {
     const titleHtml = sanitizeText(item.title || "");
     const hasLink = !!item.url;
     const discussUrl = !canEdit ? buildPartnerDiscussLink(item) : null;
+    const priority = item.priority || "medium";
+    const dotColor = PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium;
+
+    const priorityDot = canEdit
+      ? `<span class="wl-priority-dot wl-priority-clickable" data-priority="${priority}" style="background:${dotColor}" title="${PRIORITY_LABELS[priority]}"></span>`
+      : `<span class="wl-priority-dot" style="background:${dotColor}" title="${PRIORITY_LABELS[priority]}"></span>`;
 
     const linkPart = hasLink
       ? `<button class="wl-link-btn" data-url="${encodeURI(
@@ -511,9 +560,10 @@
 
     return `
       <div class="wl-main">
+        ${priorityDot}
         <div class="wl-text">
           <div class="wl-title wish-title">${titleHtml}</div>
-          
+
         </div>
         <div class="wl-actions">
           ${linkPart}
@@ -541,7 +591,7 @@
     } else {
       myEmptyEl.classList.add("hidden");
 
-      state.my_wishlist.forEach((item) => {
+      sortedWishlist(state.my_wishlist).forEach((item) => {
         const li = document.createElement("li");
         li.className = "wl-item";
         li.dataset.id = item.id;
@@ -557,7 +607,7 @@
     } else {
       partnerEmptyEl.classList.add("hidden");
 
-      state.partner_wishlist.forEach((item) => {
+      sortedWishlist(state.partner_wishlist).forEach((item) => {
         const li = document.createElement("li");
         li.className = "wl-item";
         li.dataset.id = item.id;
@@ -727,6 +777,76 @@
         }
         return;
       }
+    });
+  }
+
+  // выпадающий список приоритетов
+  function showPriorityDropdown(dot, itemId) {
+    // закрыть уже открытый
+    const existing = document.querySelector(".wl-priority-dropdown");
+    if (existing) existing.remove();
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "wl-priority-dropdown";
+
+    const options = [
+      { value: "high", label: "Очень хочу", color: PRIORITY_COLORS.high },
+      { value: "medium", label: "Хочу", color: PRIORITY_COLORS.medium },
+      { value: "low", label: "Несрочно", color: PRIORITY_COLORS.low },
+    ];
+
+    options.forEach((opt) => {
+      const row = document.createElement("div");
+      row.className = "wl-priority-option";
+      row.innerHTML = `<span class="wl-priority-dot-small" style="background:${opt.color}"></span> ${opt.label}`;
+      row.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        dropdown.remove();
+        try {
+          await apiPost("/api/wishlist/set_priority", { user, item_id: itemId, priority: opt.value });
+          const item = state.my_wishlist.find((i) => i.id === itemId);
+          if (item) item.priority = opt.value;
+          renderWishlist();
+          haptic("select");
+        } catch (err) {
+          console.error(err);
+          showError("Ошибка смены приоритета: " + err.message);
+        }
+      });
+      dropdown.appendChild(row);
+    });
+
+    // позиционируем рядом с точкой
+    const rect = dot.getBoundingClientRect();
+    dropdown.style.position = "fixed";
+    dropdown.style.left = rect.left + "px";
+    dropdown.style.top = (rect.bottom + 4) + "px";
+    dropdown.style.zIndex = "9999";
+
+    document.body.appendChild(dropdown);
+
+    // закрыть при клике снаружи
+    setTimeout(() => {
+      const closeHandler = (ev) => {
+        if (!dropdown.contains(ev.target)) {
+          dropdown.remove();
+          document.removeEventListener("click", closeHandler, true);
+        }
+      };
+      document.addEventListener("click", closeHandler, true);
+    }, 0);
+  }
+
+  if (myWishlistEl) {
+    myWishlistEl.addEventListener("click", (e) => {
+      const dot = e.target.closest(".wl-priority-clickable");
+      if (!dot) return;
+      const li = dot.closest("li");
+      if (!li) return;
+      const id = parseInt(li.dataset.id, 10);
+      if (!id) return;
+      e.stopPropagation();
+      showPriorityDropdown(dot, id);
     });
   }
 
@@ -933,6 +1053,86 @@
       }
     });
   }
+
+  // === СОРТИРОВКА WISHLIST =====================================
+
+  const sortDateBtn = document.getElementById("sort-date-btn");
+  const sortTitleBtn = document.getElementById("sort-title-btn");
+  const sortPriorityBtn = document.getElementById("sort-priority-btn");
+  const filterToggleBtn = document.getElementById("filter-toggle-btn");
+  const filterLabel = document.getElementById("filter-label");
+  const sortBar = document.querySelector(".wl-sort-bar");
+
+  const FILTER_LABELS = {
+    priority: { desc: "сначала важные", asc: "сначала несрочные" },
+    title:    { asc:  "сначала А-Я",   desc: "сначала Я-А" },
+    date:     { desc: "сначала новые",  asc:  "сначала старые" },
+  };
+
+  function updateFilterLabel() {
+    if (filterLabel) {
+      filterLabel.textContent = FILTER_LABELS[sortField]?.[sortDir] || "";
+    }
+  }
+
+  const SORT_LABELS = {
+    priority: { desc: "(важные)", asc: "(несрочные)" },
+    title:    { asc:  "(А-Я)",    desc: "(Я-А)" },
+    date:     { desc: "(новые)",  asc:  "(старые)" },
+  };
+
+  function updateSortUI() {
+    [sortDateBtn, sortTitleBtn, sortPriorityBtn].forEach((btn) => {
+      if (!btn) return;
+      const field = btn.dataset.field;
+      const arrow = btn.querySelector(".sort-arrow");
+      const isActive = field === sortField;
+      btn.classList.toggle("wl-sort-active", isActive);
+      if (arrow) {
+        const dir = isActive ? sortDir : (field === "title" ? "asc" : "desc");
+        arrow.textContent = SORT_LABELS[field]?.[dir] || "";
+      }
+    });
+  }
+
+  function closeSortBar() {
+    if (!sortBar) return;
+    sortBar.classList.add("hidden");
+    if (filterToggleBtn) filterToggleBtn.classList.remove("wl-filter-active");
+  }
+
+  function handleSortClick(field) {
+    if (sortField === field) {
+      sortDir = sortDir === "asc" ? "desc" : "asc";
+    } else {
+      sortField = field;
+      sortDir = field === "date" || field === "priority" ? "desc" : "asc";
+    }
+    updateSortUI();
+    updateFilterLabel();
+    renderWishlist();
+    haptic("select");
+    closeSortBar();
+  }
+
+  updateFilterLabel();
+
+  if (filterToggleBtn && sortBar) {
+    filterToggleBtn.addEventListener("click", () => {
+      const isOpen = !sortBar.classList.contains("hidden");
+      if (isOpen) {
+        closeSortBar();
+      } else {
+        sortBar.classList.remove("hidden");
+        filterToggleBtn.classList.add("wl-filter-active");
+      }
+      haptic("light");
+    });
+  }
+
+  if (sortDateBtn) sortDateBtn.addEventListener("click", () => handleSortClick("date"));
+  if (sortTitleBtn) sortTitleBtn.addEventListener("click", () => handleSortClick("title"));
+  if (sortPriorityBtn) sortPriorityBtn.addEventListener("click", () => handleSortClick("priority"));
 
   // старт
   init();
