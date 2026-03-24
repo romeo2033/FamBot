@@ -248,25 +248,38 @@
 
   const PRIORITY_ORDER = { high: 3, medium: 2, low: 1 };
 
-  function sortedWishlist(list) {
-    return [...list].sort((a, b) => {
-      // Всегда сначала сортируем по приоритету (высокий → низкий)
-      const pa = PRIORITY_ORDER[a.priority] || 2;
-      const pb = PRIORITY_ORDER[b.priority] || 2;
-      if (pa !== pb) return pb - pa;
+  function cmpPriority(a, b) {
+    return (PRIORITY_ORDER[b.priority] || 2) - (PRIORITY_ORDER[a.priority] || 2);
+  }
 
-      // Затем по выбранному полю
-      let cmp = 0;
-      if (sortField === "date" || sortField === "priority") {
-        const da = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const db = b.created_at ? new Date(b.created_at).getTime() : 0;
-        cmp = da - db;
-      } else {
-        const ta = (a.title || "").toLowerCase();
-        const tb = (b.title || "").toLowerCase();
-        cmp = ta < tb ? -1 : ta > tb ? 1 : 0;
+  function cmpTitle(a, b) {
+    const ta = (a.title || "").toLowerCase();
+    const tb = (b.title || "").toLowerCase();
+    return ta < tb ? -1 : ta > tb ? 1 : 0;
+  }
+
+  function cmpDate(a, b) {
+    const da = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const db = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return db - da; // новые первыми по умолчанию
+  }
+
+  function sortedWishlist(list) {
+    const ORDER = {
+      priority: [cmpPriority, cmpTitle, cmpDate],
+      title:    [cmpTitle, cmpPriority, cmpDate],
+      date:     [cmpDate, cmpPriority, cmpTitle],
+    };
+    const comparators = ORDER[sortField] || ORDER.priority;
+
+    return [...list].sort((a, b) => {
+      for (let i = 0; i < comparators.length; i++) {
+        let cmp = comparators[i](a, b);
+        // направление применяется только к первичному полю
+        if (i === 0) cmp = sortDir === "asc" ? -cmp : cmp;
+        if (cmp !== 0) return cmp;
       }
-      return sortDir === "asc" ? cmp : -cmp;
+      return 0;
     });
   }
 
@@ -1047,7 +1060,26 @@
   const sortTitleBtn = document.getElementById("sort-title-btn");
   const sortPriorityBtn = document.getElementById("sort-priority-btn");
   const filterToggleBtn = document.getElementById("filter-toggle-btn");
+  const filterLabel = document.getElementById("filter-label");
   const sortBar = document.querySelector(".wl-sort-bar");
+
+  const FILTER_LABELS = {
+    priority: { desc: "сначала важные", asc: "сначала несрочные" },
+    title:    { asc:  "сначала А-Я",   desc: "сначала Я-А" },
+    date:     { desc: "сначала новые",  asc:  "сначала старые" },
+  };
+
+  function updateFilterLabel() {
+    if (filterLabel) {
+      filterLabel.textContent = FILTER_LABELS[sortField]?.[sortDir] || "";
+    }
+  }
+
+  const SORT_LABELS = {
+    priority: { desc: "(важные)", asc: "(несрочные)" },
+    title:    { asc:  "(А-Я)",    desc: "(Я-А)" },
+    date:     { desc: "(новые)",  asc:  "(старые)" },
+  };
 
   function updateSortUI() {
     [sortDateBtn, sortTitleBtn, sortPriorityBtn].forEach((btn) => {
@@ -1056,7 +1088,10 @@
       const arrow = btn.querySelector(".sort-arrow");
       const isActive = field === sortField;
       btn.classList.toggle("wl-sort-active", isActive);
-      if (arrow) arrow.textContent = (isActive && sortDir === "desc") ? "↓" : "↑";
+      if (arrow) {
+        const dir = isActive ? sortDir : (field === "title" ? "asc" : "desc");
+        arrow.textContent = SORT_LABELS[field]?.[dir] || "";
+      }
     });
   }
 
@@ -1074,10 +1109,13 @@
       sortDir = field === "date" || field === "priority" ? "desc" : "asc";
     }
     updateSortUI();
+    updateFilterLabel();
     renderWishlist();
     haptic("select");
     closeSortBar();
   }
+
+  updateFilterLabel();
 
   if (filterToggleBtn && sortBar) {
     filterToggleBtn.addEventListener("click", () => {

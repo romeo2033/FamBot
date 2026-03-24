@@ -186,25 +186,25 @@
           </p>
         </div>
 
-        <div class="wl-tabs-row">
-          <div class="tabs wishlist-tabs">
-            <button id="tab-partner" class="tab active">Список партнёра</button>
-            <button id="tab-my" class="tab">Мой список</button>
-          </div>
-          <button id="filter-toggle-btn" class="btn-danger wl-filter-btn" type="button">
-            <svg class="nav-icon" viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M0 3H16V1H0V3Z" fill="currentColor"/>
-              <path d="M2 7H14V5H2V7Z" fill="currentColor"/>
-              <path d="M4 11H12V9H4V11Z" fill="currentColor"/>
-              <path d="M10 15H6V13H10V15Z" fill="currentColor"/>
-            </svg>
-          </button>
+        <div class="tabs wishlist-tabs">
+          <button id="tab-partner" class="tab active">Список партнёра</button>
+          <button id="tab-my" class="tab">Мой список</button>
         </div>
 
+        <button id="filter-toggle-btn" class="wl-filter-btn" type="button">
+          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M0 3H16V1H0V3Z" fill="currentColor"/>
+            <path d="M2 7H14V5H2V7Z" fill="currentColor"/>
+            <path d="M4 11H12V9H4V11Z" fill="currentColor"/>
+            <path d="M10 15H6V13H10V15Z" fill="currentColor"/>
+          </svg>
+          <span id="filter-label">сначала важные</span>
+        </button>
+
         <div class="wl-sort-bar hidden">
-            <button id="sort-priority-btn" class="wl-sort-btn wl-sort-active" data-field="priority" data-dir="desc">По приоритету <span class="sort-arrow">↓</span></button>
-            <button id="sort-title-btn" class="wl-sort-btn" data-field="title" data-dir="asc">По имени <span class="sort-arrow">↑</span></button>
-            <button id="sort-date-btn" class="wl-sort-btn" data-field="date" data-dir="desc">По новизне <span class="sort-arrow">↓</span></button>
+            <button id="sort-priority-btn" class="wl-sort-btn wl-sort-active" data-field="priority" data-dir="desc">По приоритету <span class="sort-arrow">(важные)</span></button>
+            <button id="sort-title-btn" class="wl-sort-btn" data-field="title" data-dir="asc">По имени <span class="sort-arrow">(А-Я)</span></button>
+            <button id="sort-date-btn" class="wl-sort-btn" data-field="date" data-dir="desc">По новизне <span class="sort-arrow">(новые)</span></button>
         </div>
 
         <!-- Блок Мой список -->
