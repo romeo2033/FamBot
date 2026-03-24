@@ -77,6 +77,7 @@ def serialize_wishlist_item(row: Dict[str, Any]) -> Dict[str, Any]:
         "description": row.get("description"),
         "url": row.get("url"),
         "is_done": bool(row.get("is_done")),
+        "priority": row.get("priority") or "medium",
         "created_at": serialize_date(row.get("created_at")),
     }
 
@@ -545,6 +546,36 @@ def api_wishlist_toggle_done():
     execute(
         "UPDATE wishlist_items SET is_done = %s WHERE id = %s AND owner_user_id = %s",
         (done, item_id, user_id),
+    )
+
+    return jsonify({"ok": True})
+
+
+@app.post("/api/wishlist/set_priority")
+def api_wishlist_set_priority():
+    """
+    Установить приоритет для своего желания.
+    JSON: { "user": {...}, "item_id": 123, "priority": "high" }
+    Допустимые значения priority: "high", "medium", "low"
+    """
+    data = request.json or {}
+    item_id = data.get("item_id")
+    priority = (data.get("priority") or "").strip()
+
+    if not isinstance(item_id, int):
+        return jsonify({"ok": False, "error": "ITEM_ID_REQUIRED"}), 400
+    if priority not in ("high", "medium", "low"):
+        return jsonify({"ok": False, "error": "INVALID_PRIORITY"}), 400
+
+    user_id, pair, err_resp, err_code = get_current_user_and_pair(data)
+    if err_resp is not None:
+        return err_resp, err_code
+    if not pair:
+        return jsonify({"ok": False, "error": "NO_PAIR"}), 400
+
+    execute(
+        "UPDATE wishlist_items SET priority = %s WHERE id = %s AND owner_user_id = %s",
+        (priority, item_id, user_id),
     )
 
     return jsonify({"ok": True})

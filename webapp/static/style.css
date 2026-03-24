@@ -1046,3 +1046,53 @@ textarea {
     opacity: 1 !important;
   }
 }
+
+/* === ПРИОРИТЕТ ЖЕЛАНИЙ ================================== */
+
+.wl-priority-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.wl-priority-clickable {
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.wl-priority-clickable:active {
+  transform: scale(1.3);
+}
+
+.wl-priority-dropdown {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 150px;
+  overflow: hidden;
+}
+
+.wl-priority-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.wl-priority-option:active {
+  background: #f2f2f7;
+}
+
+.wl-priority-dot-small {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  display: inline-block;
+}
