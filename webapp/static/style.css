@@ -990,6 +990,36 @@ textarea {
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08) !important;
 }
 
+.wl-sort-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.wl-sort-btn {
+  width: auto;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-soft);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.wl-sort-btn.wl-sort-active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  border-color: transparent;
+}
+
+.sort-arrow {
+  font-size: 11px;
+}
+
 .wishlist-header {
   display: flex;
   flex-direction: column;

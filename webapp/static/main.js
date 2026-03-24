@@ -243,6 +243,25 @@
     partner_wishlist: [],
   };
 
+  let sortField = "date";
+  let sortDir = "desc";
+
+  function sortedWishlist(list) {
+    return [...list].sort((a, b) => {
+      let cmp = 0;
+      if (sortField === "date") {
+        const da = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const db = b.created_at ? new Date(b.created_at).getTime() : 0;
+        cmp = da - db;
+      } else {
+        const ta = (a.title || "").toLowerCase();
+        const tb = (b.title || "").toLowerCase();
+        cmp = ta < tb ? -1 : ta > tb ? 1 : 0;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+  }
+
   // === УТИЛИТЫ ==================================================
 
   function showError(msg) {
@@ -541,7 +560,7 @@
     } else {
       myEmptyEl.classList.add("hidden");
 
-      state.my_wishlist.forEach((item) => {
+      sortedWishlist(state.my_wishlist).forEach((item) => {
         const li = document.createElement("li");
         li.className = "wl-item";
         li.dataset.id = item.id;
@@ -557,7 +576,7 @@
     } else {
       partnerEmptyEl.classList.add("hidden");
 
-      state.partner_wishlist.forEach((item) => {
+      sortedWishlist(state.partner_wishlist).forEach((item) => {
         const li = document.createElement("li");
         li.className = "wl-item";
         li.dataset.id = item.id;
@@ -933,6 +952,37 @@
       }
     });
   }
+
+  // === СОРТИРОВКА WISHLIST =====================================
+
+  const sortDateBtn = document.getElementById("sort-date-btn");
+  const sortTitleBtn = document.getElementById("sort-title-btn");
+
+  function updateSortUI() {
+    [sortDateBtn, sortTitleBtn].forEach((btn) => {
+      if (!btn) return;
+      const field = btn.dataset.field;
+      const arrow = btn.querySelector(".sort-arrow");
+      const isActive = field === sortField;
+      btn.classList.toggle("wl-sort-active", isActive);
+      if (arrow) arrow.textContent = (isActive && sortDir === "desc") ? "↓" : "↑";
+    });
+  }
+
+  function handleSortClick(field) {
+    if (sortField === field) {
+      sortDir = sortDir === "asc" ? "desc" : "asc";
+    } else {
+      sortField = field;
+      sortDir = field === "date" ? "desc" : "asc";
+    }
+    updateSortUI();
+    renderWishlist();
+    haptic("select");
+  }
+
+  if (sortDateBtn) sortDateBtn.addEventListener("click", () => handleSortClick("date"));
+  if (sortTitleBtn) sortTitleBtn.addEventListener("click", () => handleSortClick("title"));
 
   // старт
   init();
