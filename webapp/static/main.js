@@ -243,13 +243,21 @@
     partner_wishlist: [],
   };
 
-  let sortField = "date";
+  let sortField = "priority";
   let sortDir = "desc";
+
+  const PRIORITY_ORDER = { high: 3, medium: 2, low: 1 };
 
   function sortedWishlist(list) {
     return [...list].sort((a, b) => {
+      // Всегда сначала сортируем по приоритету (высокий → низкий)
+      const pa = PRIORITY_ORDER[a.priority] || 2;
+      const pb = PRIORITY_ORDER[b.priority] || 2;
+      if (pa !== pb) return pb - pa;
+
+      // Затем по выбранному полю
       let cmp = 0;
-      if (sortField === "date") {
+      if (sortField === "date" || sortField === "priority") {
         const da = a.created_at ? new Date(a.created_at).getTime() : 0;
         const db = b.created_at ? new Date(b.created_at).getTime() : 0;
         cmp = da - db;
@@ -507,10 +515,19 @@
 
   // === WISHLIST РЕНДЕР ==========================================
 
+  const PRIORITY_COLORS = { high: "#ff3b30", medium: "#34c759", low: "#007aff" };
+  const PRIORITY_LABELS = { high: "Очень хочу", medium: "Хочу", low: "Несрочно" };
+
   function makeWishlistItemHTML(item, canEdit) {
     const titleHtml = sanitizeText(item.title || "");
     const hasLink = !!item.url;
     const discussUrl = !canEdit ? buildPartnerDiscussLink(item) : null;
+    const priority = item.priority || "medium";
+    const dotColor = PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium;
+
+    const priorityDot = canEdit
+      ? `<span class="wl-priority-dot wl-priority-clickable" data-priority="${priority}" style="background:${dotColor}" title="${PRIORITY_LABELS[priority]}"></span>`
+      : `<span class="wl-priority-dot" style="background:${dotColor}" title="${PRIORITY_LABELS[priority]}"></span>`;
 
     const linkPart = hasLink
       ? `<button class="wl-link-btn" data-url="${encodeURI(
@@ -530,9 +547,10 @@
 
     return `
       <div class="wl-main">
+        ${priorityDot}
         <div class="wl-text">
           <div class="wl-title wish-title">${titleHtml}</div>
-          
+
         </div>
         <div class="wl-actions">
           ${linkPart}
@@ -749,6 +767,76 @@
     });
   }
 
+  // выпадающий список приоритетов
+  function showPriorityDropdown(dot, itemId) {
+    // закрыть уже открытый
+    const existing = document.querySelector(".wl-priority-dropdown");
+    if (existing) existing.remove();
+
+    const dropdown = document.createElement("div");
+    dropdown.className = "wl-priority-dropdown";
+
+    const options = [
+      { value: "high", label: "Очень хочу", color: PRIORITY_COLORS.high },
+      { value: "medium", label: "Хочу", color: PRIORITY_COLORS.medium },
+      { value: "low", label: "Несрочно", color: PRIORITY_COLORS.low },
+    ];
+
+    options.forEach((opt) => {
+      const row = document.createElement("div");
+      row.className = "wl-priority-option";
+      row.innerHTML = `<span class="wl-priority-dot-small" style="background:${opt.color}"></span> ${opt.label}`;
+      row.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        dropdown.remove();
+        try {
+          await apiPost("/api/wishlist/set_priority", { user, item_id: itemId, priority: opt.value });
+          const item = state.my_wishlist.find((i) => i.id === itemId);
+          if (item) item.priority = opt.value;
+          renderWishlist();
+          haptic("select");
+        } catch (err) {
+          console.error(err);
+          showError("Ошибка смены приоритета: " + err.message);
+        }
+      });
+      dropdown.appendChild(row);
+    });
+
+    // позиционируем рядом с точкой
+    const rect = dot.getBoundingClientRect();
+    dropdown.style.position = "fixed";
+    dropdown.style.left = rect.left + "px";
+    dropdown.style.top = (rect.bottom + 4) + "px";
+    dropdown.style.zIndex = "9999";
+
+    document.body.appendChild(dropdown);
+
+    // закрыть при клике снаружи
+    setTimeout(() => {
+      const closeHandler = (ev) => {
+        if (!dropdown.contains(ev.target)) {
+          dropdown.remove();
+          document.removeEventListener("click", closeHandler, true);
+        }
+      };
+      document.addEventListener("click", closeHandler, true);
+    }, 0);
+  }
+
+  if (myWishlistEl) {
+    myWishlistEl.addEventListener("click", (e) => {
+      const dot = e.target.closest(".wl-priority-clickable");
+      if (!dot) return;
+      const li = dot.closest("li");
+      if (!li) return;
+      const id = parseInt(li.dataset.id, 10);
+      if (!id) return;
+      e.stopPropagation();
+      showPriorityDropdown(dot, id);
+    });
+  }
+
   // клики по wishlist партнёра (открытие ссылок)
   if (partnerWishlistEl) {
     partnerWishlistEl.addEventListener("click", (e) => {
@@ -957,9 +1045,10 @@
 
   const sortDateBtn = document.getElementById("sort-date-btn");
   const sortTitleBtn = document.getElementById("sort-title-btn");
+  const sortPriorityBtn = document.getElementById("sort-priority-btn");
 
   function updateSortUI() {
-    [sortDateBtn, sortTitleBtn].forEach((btn) => {
+    [sortDateBtn, sortTitleBtn, sortPriorityBtn].forEach((btn) => {
       if (!btn) return;
       const field = btn.dataset.field;
       const arrow = btn.querySelector(".sort-arrow");
@@ -974,7 +1063,7 @@
       sortDir = sortDir === "asc" ? "desc" : "asc";
     } else {
       sortField = field;
-      sortDir = field === "date" ? "desc" : "asc";
+      sortDir = field === "date" || field === "priority" ? "desc" : "asc";
     }
     updateSortUI();
     renderWishlist();
@@ -983,6 +1072,7 @@
 
   if (sortDateBtn) sortDateBtn.addEventListener("click", () => handleSortClick("date"));
   if (sortTitleBtn) sortTitleBtn.addEventListener("click", () => handleSortClick("title"));
+  if (sortPriorityBtn) sortPriorityBtn.addEventListener("click", () => handleSortClick("priority"));
 
   // старт
   init();

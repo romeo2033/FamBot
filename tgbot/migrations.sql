@@ -36,6 +36,9 @@ CREATE TABLE IF NOT EXISTS wishlist_items (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE wishlist_items
+    ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium';
+
 CREATE TABLE IF NOT EXISTS notifications_log (
     id              SERIAL PRIMARY KEY,
     pair_id         INT NOT NULL REFERENCES pairs(id) ON DELETE CASCADE,
