@@ -102,7 +102,8 @@
   if (tg) {
     document.body.classList.add("tg-app");
     const logo = document.getElementById("tg-top-logo");
-    if (logo) logo.classList.remove("hidden");
+    // логотип показываем только в полноэкранном режиме (не из меню)
+    if (logo && tg.isFullscreen) logo.classList.remove("hidden");
   }
 
   // === КЛИКИ МИМО / КЛАВИАТУРА ===============================
