@@ -175,6 +175,120 @@
 });
 
   // элементы пары / дат / облака
+  const WISHES = [
+    "Пусть ваша любовь с каждым годом становится глубже, а счастье — тише и надёжнее.",
+    "Желаю вам всегда находить повод улыбнуться друг другу — даже в самые обычные дни.",
+    "Пусть дом ваш будет наполнен теплом, смехом и запахом чего-то вкусного.",
+    "Любите друг друга так, чтобы даже молчание вместе было уютным.",
+    "Желаю вам путешествий, которые вы будете вспоминать всю жизнь.",
+    "Пусть разногласия заканчиваются объятиями, а не обидами.",
+    "Желаю вам быть лучшими друзьями — не только влюблёнными.",
+    "Пусть ваша история любви будет той, которую захочется рассказывать внукам.",
+    "Желаю вам уважать молчание друг друга так же, как и слова.",
+    "Пусть каждое утро начинается с благодарности за то, что вы вместе.",
+    "Желаю вам смеяться над одними и теми же глупостями через двадцать лет.",
+    "Пусть ваша любовь не нуждается в доказательствах — она просто есть.",
+    "Желаю вам танцевать на кухне без всякого повода.",
+    "Пусть вы никогда не перестанете удивлять друг друга.",
+    "Желаю вам мягких слов в трудные минуты и крепких объятий, когда слова не нужны.",
+    "Пусть ваш союз будет тихим портом в любую бурю.",
+    "Желаю вам доверять друг другу безоговорочно — это редкое сокровище.",
+    "Пусть совместный быт станет не рутиной, а ежедневным маленьким приключением.",
+    "Желаю вам встречать закаты вместе — сначала с бокалом вина, потом с чашкой чая.",
+    "Пусть ваши мечты совпадают — а если нет, пусть вы умеете договариваться.",
+    "Желаю вам никогда не ложиться спать, не помирившись.",
+    "Пусть каждый день приносит что-то, за что вы благодарны друг другу.",
+    "Желаю вам обниматься крепко и часто — это лечит.",
+    "Пусть ваши планы сбываются, а неожиданности оказываются приятными.",
+    "Желаю вам быть командой, которая не проигрывает — потому что поддерживает друг друга.",
+    "Пусть любовь делает вас лучшими версиями самих себя.",
+    "Желаю вам совместных традиций, которые станут вашей тайной историей.",
+    "Пусть ваши объятия всегда пахнут домом.",
+    "Желаю вам не бояться говорить «прости» первым.",
+    "Пусть между вами всегда будет место для шутки — даже в серьёзный момент.",
+    "Желаю вам совместных поездок, где хоть раз заблудитесь и найдёте что-то прекрасное.",
+    "Пусть ваш холодильник всегда будет полон — а сердца ещё больше.",
+    "Желаю вам смотреть друг на друга с теплом и через тридцать лет.",
+    "Пусть ваш союз будет прочнее, чем икея — и без лишних инструкций.",
+    "Желаю вам принимать недостатки друг друга как часть любимого пейзажа.",
+    "Пусть первый кофе утром будет сделан с любовью — и выпит вместе.",
+    "Желаю вам не терять интереса друг к другу никогда.",
+    "Пусть ваши ссоры будут редкими, а примирения — страстными.",
+    "Желаю вам поддерживать мечты друг друга, даже самые странные.",
+    "Пусть дом наполняется детским смехом — или хотя бы вашим собственным.",
+    "Желаю вам быть друг для друга якорем и парусом одновременно.",
+    "Пусть вы никогда не забываете, почему влюбились.",
+    "Желаю вам тихих вечеров и громких праздников в равной мере.",
+    "Пусть ваш GPS всегда ведёт в одном направлении — домой, к друг другу.",
+    "Желаю вам спорить только о том, что смотреть вечером.",
+    "Пусть нежность в ваших отношениях живёт дольше влюблённости.",
+    "Желаю вам совместных проектов — будь то ремонт или огород.",
+    "Пусть каждое «я люблю тебя» звучит так, будто говорится впервые.",
+    "Желаю вам не принимать друг друга как должное — ни единого дня.",
+    "Пусть ваша любовь будет тихой рекой, а не только бурным водопадом.",
+    "Желаю вам находить романтику в обычных вещах — в пробке, в очереди, в дожде.",
+    "Пусть вы всегда знаете, что сказать, когда другому грустно.",
+    "Желаю вам вместе встречать зиму у камина и лето у моря.",
+    "Пусть ваш брак будет не финишной лентой, а стартом.",
+    "Желаю вам не переставать ухаживать друг за другом — это важнее цветов.",
+    "Пусть вы умеете просить о помощи и с радостью помогать.",
+    "Желаю вам нечаянных поцелуев в середине обычного дня.",
+    "Пусть вокруг вас будут люди, которые рады вашему счастью.",
+    "Желаю вам делиться не только радостями, но и трудностями — пополам.",
+    "Пусть ваша любовь переживёт ремонт, переезд и IKEA в одни выходные.",
+    "Желаю вам сохранить детское восхищение друг другом.",
+    "Пусть даже совместная готовка в маленькой кухне приносит удовольствие.",
+    "Желаю вам праздновать маленькие победы не меньше, чем большие.",
+    "Пусть ваши взгляды говорят больше, чем слова.",
+    "Желаю вам не бояться перемен — вместе любые перемены к лучшему.",
+    "Пусть ваша совместная жизнь будет такой, что завидуют тихо и по-доброму.",
+    "Желаю вам успевать говорить «спасибо» за мелочи — именно из них жизнь.",
+    "Пусть вы всегда найдёте время для свидания, даже прожив вместе двадцать лет.",
+    "Желаю вам уметь молчать вместе — это высшая близость.",
+    "Пусть ваши праздники будут шумными, а будни — уютными.",
+    "Желаю вам встречать любые трудности лицом к лицу — а не друг против друга.",
+    "Пусть вы никогда не перестанете делать друг другу сюрпризы.",
+    "Желаю вам быть той парой, на которую смотрят и улыбаются незнакомые люди.",
+    "Пусть каждая годовщина будет поводом вспомнить, как всё начиналось.",
+    "Желаю вам совместных походов в кино — даже если кто-то уснёт на половине.",
+    "Пусть ваши разные вкусы дополняют, а не мешают друг другу.",
+    "Желаю вам держаться за руки — и в самолёте, и в больнице, и просто так.",
+    "Пусть ваша любовь будет практичной — той, что помогает жить, а не только красивой.",
+    "Желаю вам читать книги вслух и слушать музыку вместе.",
+    "Пусть ваши родители гордятся тем, что получилось.",
+    "Желаю вам подушек побольше и одеяла на двоих.",
+    "Пусть вы будете бережны с настроением друг друга в конце тяжёлого дня.",
+    "Желаю вам совместного словаря — тех слов и шуток, которые понятны только вам.",
+    "Пусть ваши дети — если они будут — видят, как родители любят друг друга.",
+    "Желаю вам уметь прощать — быстро и без условий.",
+    "Пусть даже скучный вторник с вами становится особенным.",
+    "Желаю вам всегда иметь, куда вернуться — и к кому.",
+    "Пусть ваши объятия в аэропорту будут такими, как в кино.",
+    "Желаю вам быть честными — даже когда это неудобно.",
+    "Пусть любовь не требует от вас быть идеальными.",
+    "Желаю вам вместе стареть — весело, достойно и держась за руки.",
+    "Пусть ваши воспоминания будут богаче, чем любое имущество.",
+    "Желаю вам видеть в партнёре лучшее — особенно тогда, когда сам он этого не видит.",
+    "Пусть ваша любовь будет той, которая придаёт сил, а не отнимает.",
+    "Желаю вам засыпать с улыбкой — потому что рядом тот, кто нужен.",
+    "Пусть каждый ваш день будет достаточно хорош, чтобы его помнить.",
+    "Желаю вам оставаться собой — и любить друг друга именно такими.",
+    "Пусть ваша история любви пишется медленно, подробно и с хорошим концом.",
+    "Желаю вам быть друг для друга и праздником, и тихой гаванью.",
+    "Пусть ваша любовь живёт дольше вас — в детях, воспоминаниях и улыбках тех, кто вас знал.",
+  ];
+
+  const HEARTS = ["🩷","❤️","💜","💕","💞","💓","💗","💖","💝","💟"];
+
+  const wishCard = document.getElementById("wish-card");
+  const wishText = document.getElementById("wish-text");
+  if (wishText) {
+    const heart = HEARTS[Math.floor(Math.random() * HEARTS.length)];
+    const wish = WISHES[Math.floor(Math.random() * WISHES.length)];
+    wishText.textContent = heart + " «" + wish + "»";
+  }
+
+  const anniversaryBanner = document.getElementById("anniversary-banner");
   const pairCard = document.getElementById("pair-card");
   const partnerLine = document.getElementById("partner-line");
   const relSummary = document.getElementById("rel-summary");
@@ -303,6 +417,17 @@
   }
 
   // === УТИЛИТЫ ==================================================
+
+  function pluralRu(n, forms) {
+    // forms: [1 год, 2 года, 5 лет]
+    const abs = Math.abs(n);
+    const mod10 = abs % 10;
+    const mod100 = abs % 100;
+    if (mod100 >= 11 && mod100 <= 19) return forms[2];
+    if (mod10 === 1) return forms[0];
+    if (mod10 >= 2 && mod10 <= 4) return forms[1];
+    return forms[2];
+  }
 
   function showError(msg) {
     if (!errorEl) return;
@@ -445,6 +570,8 @@
     }
 
     if (!state.has_pair) {
+      wishCard && wishCard.classList.add("hidden");
+      anniversaryBanner && anniversaryBanner.classList.add("hidden");
       pairCard.classList.add("hidden");
       cloudCard.classList.add("hidden");
       wishlistCard.classList.add("hidden");
@@ -453,6 +580,7 @@
     }
 
     noPairCard.classList.add("hidden");
+    wishCard && wishCard.classList.remove("hidden");
     pairCard.classList.remove("hidden");
     cloudCard.classList.remove("hidden");
     wishlistCard.classList.remove("hidden");
@@ -483,6 +611,29 @@
     }
 
     const stats = state.pair?.start_stats;
+
+    if (anniversaryBanner) {
+      if (stats && !stats.future && (stats.is_anniversary_today || stats.days_until_next <= 7)) {
+        const nextYear = stats.years + 1;
+        const d = stats.days_until_next;
+        let bannerText;
+        if (stats.is_anniversary_today) {
+          const yearsWord = pluralRu(stats.years, ["год", "года", "лет"]);
+          bannerText = `🎉 Сегодня ваша годовщина — ${stats.years} ${yearsWord} вместе!`;
+        } else if (d === 1) {
+          const yearsWord = pluralRu(nextYear, ["год", "года", "лет"]);
+          bannerText = `💍 Завтра годовщина — исполнится ${nextYear} ${yearsWord} вместе!`;
+        } else {
+          const daysWord = pluralRu(d, ["день", "дня", "дней"]);
+          const yearsWord = pluralRu(nextYear, ["год", "года", "лет"]);
+          bannerText = `🗓 До годовщины ${d} ${daysWord} — исполнится ${nextYear} ${yearsWord} вместе`;
+        }
+        anniversaryBanner.textContent = bannerText;
+        anniversaryBanner.classList.remove("hidden");
+      } else {
+        anniversaryBanner.classList.add("hidden");
+      }
+    }
 
     if (!stats || stats.future) {
       relSummary.innerHTML =
@@ -569,26 +720,29 @@
       ? `<button class="wish-add-link" type="button">Добавить ссылку</button>`
       : "";
 
-    const editPart = canEdit
-      ? `<br><button class="wish-delete" type="button" aria-label="Удалить">Удалить</button>`
-      : "";
-
     const discussPart = discussUrl
       ? `<button class="wl-chat-btn" data-chat-url="${discussUrl}">Обсудить</button>`
       : "";
 
-    return `
-      <div class="wl-main">
-        ${priorityDot}
-        <div class="wl-text">
-          <div class="wl-title wish-title">${titleHtml}</div>
+    const deleteReveal = canEdit
+      ? `<button class="wl-delete-reveal" type="button" aria-label="Удалить">✕</button>`
+      : "";
 
+    return `
+      <div class="wl-swipe-track">
+        <div class="wl-swipe-content">
+          <div class="wl-main">
+            ${priorityDot}
+            <div class="wl-text">
+              <div class="wl-title wish-title">${titleHtml}</div>
+            </div>
+            <div class="wl-actions">
+              ${linkPart}
+              ${discussPart}
+            </div>
+          </div>
         </div>
-        <div class="wl-actions">
-          ${linkPart}
-          ${discussPart}
-          ${editPart}
-        </div>
+        ${deleteReveal}
       </div>
     `;
   }
@@ -616,6 +770,7 @@
         li.dataset.id = item.id;
         li.innerHTML = makeWishlistItemHTML(item, true);
         myWishlistEl.appendChild(li);
+        attachWishSwipe(li);
       });
     }
 
@@ -759,6 +914,82 @@
   });
 }
 
+  // свайп-удаление желания
+  function attachWishSwipe(li) {
+    const track = li.querySelector(".wl-swipe-track");
+    if (!track) return;
+    const REVEAL_WIDTH = 68;
+    let startX = 0, startY = 0, currentX = 0, swiping = false, dirLocked = false;
+
+    function snapOpen() {
+      track.style.transition = "transform 0.22s ease";
+      track.style.transform = `translateX(-${REVEAL_WIDTH}px)`;
+      li.classList.add("wl-swiped");
+    }
+    function snapClose() {
+      track.style.transition = "transform 0.22s ease";
+      track.style.transform = "translateX(0)";
+      li.classList.remove("wl-swiped");
+    }
+
+    li._snapClose = snapClose;
+
+    li.addEventListener("touchstart", (e) => {
+      document.querySelectorAll(".wl-swiped").forEach((el) => {
+        if (el !== li && el._snapClose) el._snapClose();
+      });
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      currentX = li.classList.contains("wl-swiped") ? -REVEAL_WIDTH : 0;
+      swiping = false;
+      dirLocked = false;
+      track.style.transition = "none";
+    }, { passive: true });
+
+    li.addEventListener("touchmove", (e) => {
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if (!dirLocked) {
+        if (Math.abs(dy) > Math.abs(dx)) return;
+        dirLocked = true;
+      }
+      swiping = true;
+      const base = li.classList.contains("wl-swiped") ? -REVEAL_WIDTH : 0;
+      currentX = Math.min(0, Math.max(-REVEAL_WIDTH, base + dx));
+      track.style.transform = `translateX(${currentX}px)`;
+    }, { passive: true });
+
+    li.addEventListener("touchend", () => {
+      if (!swiping) return;
+      if (currentX < -REVEAL_WIDTH / 2) snapOpen();
+      else snapClose();
+    });
+  }
+
+  // подтверждение удаления через нативный confirm
+  async function showWishDeleteConfirm(id, li) {
+    const track = li.querySelector(".wl-swipe-track");
+    function snapClose() {
+      if (track) { track.style.transition = "transform 0.22s ease"; track.style.transform = "translateX(0)"; }
+      li.classList.remove("wl-swiped");
+    }
+    const item = state.my_wishlist.find((i) => i.id === id);
+    const title = item ? item.title : "";
+    if (!confirm(`Точно удалить желание: «${title}»?`)) {
+      snapClose();
+      return;
+    }
+    try {
+      await apiPost("/api/wishlist/delete", { user, item_id: id });
+      state.my_wishlist = state.my_wishlist.filter((i) => i.id !== id);
+      renderWishlist();
+    } catch (err) {
+      console.error(err);
+      showError("Ошибка удаления: " + err.message);
+      snapClose();
+    }
+  }
+
   // клики по моему wishlist
   if (myWishlistEl) {
     myWishlistEl.addEventListener("click", async (e) => {
@@ -767,17 +998,9 @@
       const id = parseInt(li.dataset.id, 10);
       if (!id) return;
 
-      // удаление
-      if (e.target.closest(".wish-delete")) {
-        if (!confirm("Удалить это желание?")) return;
-        try {
-          await apiPost("/api/wishlist/delete", { user, item_id: id });
-          state.my_wishlist = state.my_wishlist.filter((i) => i.id !== id);
-          renderWishlist();
-        } catch (err) {
-          console.error(err);
-          showError("Ошибка удаления: " + err.message);
-        }
+      // удаление через свайп
+      if (e.target.closest(".wl-delete-reveal")) {
+        showWishDeleteConfirm(id, li);
         return;
       }
 

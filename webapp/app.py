@@ -157,6 +157,12 @@ def compute_relationship_stats(start: date) -> Dict[str, Any]:
     big_anniv_date = date(start.year + next_big_year, start.month, start.day)
     days_to_big = (big_anniv_date - today).days
 
+    is_anniversary_today = (
+        years > 0
+        and today.month == start.month
+        and today.day == start.day
+    )
+
     return {
         "start_date_iso": serialize_date(start),
         "start_date_human": fmt_date_ddmmyyyy(start),
@@ -164,6 +170,7 @@ def compute_relationship_stats(start: date) -> Dict[str, Any]:
         "days_together": days_together,
         "years": years,
         "months": months,
+        "is_anniversary_today": is_anniversary_today,
         "days_until_next": days_until_next,
         "percent_to_next": percent,
         "next_milestone_days": next_milestone,
@@ -242,7 +249,9 @@ def build_wishlist_xlsx(items: list[dict], sheet_name: str = "Wishlist") -> Byte
     ws = wb.active
     ws.title = sheet_name[:31]  # Excel limit
 
-    headers = ["Желание", "Ссылка", "Создано"]
+    PRIORITY_LABELS = {"high": "Очень хочу", "medium": "Хочу", "low": "Несрочно"}
+
+    headers = ["Желание", "Приоритет", "Ссылка", "Создано"]
     ws.append(headers)
 
     header_font = Font(bold=True)
@@ -253,9 +262,11 @@ def build_wishlist_xlsx(items: list[dict], sheet_name: str = "Wishlist") -> Byte
 
     for r in items:
         created_at = r.get("created_at")
+        priority = r.get("priority") or "medium"
         ws.append(
             [
                 r.get("title") or "",
+                PRIORITY_LABELS.get(priority, priority),
                 r.get("url") or "",
                 (created_at.strftime("%d.%m.%Y") if created_at else ""),
             ]
@@ -296,7 +307,7 @@ def send_wishlist_to_bot(pair: dict, owner_user_id: int, receiver_user_id: int, 
 
     items = fetchall(
         """
-        SELECT title, url, created_at
+        SELECT title, url, created_at, priority
         FROM wishlist_items
         WHERE pair_id = %s AND owner_user_id = %s
         ORDER BY created_at DESC

@@ -362,22 +362,17 @@ li:last-child {
   color: var(--accent-strong);
 }
 
-.wish-add-link,
-.wish-delete {
+.wish-add-link {
   font-size: 12px;
   padding: 4px 9px;
   border-radius: 999px;
   border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--accent-strong);
   cursor: pointer;
   float: right;
   width: fit-content;
   transition: background 0.15s ease, color 0.15s ease;
-}
-
-.wish-add-link {
-  color: var(--accent-strong);
 }
 
 .wl-link-btn {
@@ -412,11 +407,6 @@ li:last-child {
 
 .wish-add-link:hover {
   background: rgba(0, 0, 0, 0.04);
-}
-
-
-.wish-delete:hover {
-  background: var(--danger-soft);
 }
 
 .wish-done-marker {
@@ -757,11 +747,9 @@ body.keyboard-open .bottom-nav {
 /* одна ячейка желания */
 
 .wl-item {
-  padding: 10px 14px;
-  background: #ffffff;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
 /* разделитель между ячейками */
@@ -769,6 +757,63 @@ body.keyboard-open .bottom-nav {
 .wl-item + .wl-item {
   border-top: 0.5px solid var(--accent-soft);
 }
+
+/* трек: шире контейнера на ширину кнопки — кнопка уходит за правый край */
+
+.wl-swipe-track {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: calc(100% + 68px);
+  will-change: transform;
+  transform: translateX(0);
+}
+
+/* контентная часть = ширина контейнера */
+
+.wl-swipe-content {
+  flex: 0 0 calc(100% - 68px);
+  min-width: 0;
+  padding: 10px 14px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+/* красная кнопка — в потоке, скрыта overflow:hidden */
+
+.wl-delete-reveal {
+  flex: 0 0 68px;
+  width: 68px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  font-size: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.wl-delete-reveal::after {
+  content: "✕";
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ff3b30;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding-bottom: 1px;
+}
+
 
 /* основная строка: статус + текст + действие */
 
@@ -1124,4 +1169,24 @@ textarea {
   border-radius: 999px;
   flex-shrink: 0;
   display: inline-block;
+}
+
+/* === БАННЕР ГОДОВЩИНЫ ========================================= */
+
+.anniversary-banner {
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa94d 50%, #ffd43b 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.35);
+}
+
+body.theme-pink .anniversary-banner {
+  background: linear-gradient(135deg, #ff2d55 0%, #ff6b9d 50%, #ffb3c6 100%);
+  box-shadow: 0 4px 16px rgba(255, 45, 85, 0.35);
 }
