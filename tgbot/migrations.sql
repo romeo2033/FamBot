@@ -46,3 +46,11 @@ CREATE TABLE IF NOT EXISTS notifications_log (
     payload         JSONB,
     sent_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS notes (
+    id              SERIAL PRIMARY KEY,
+    pair_id         INT NOT NULL REFERENCES pairs(id) ON DELETE CASCADE,
+    author_user_id  INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    text            TEXT NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

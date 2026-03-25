@@ -165,10 +165,19 @@
   // страницы
   const pageMain = document.getElementById("page-main");
   const pageWishlist = document.getElementById("page-wishlist");
+  const pageNotes = document.getElementById("page-notes");
   const navMainBtn = document.querySelector('.nav-btn[data-page="main"]');
-  const navWishlistBtn = document.querySelector(
-    '.nav-btn[data-page="wishlist"]'
-  );
+  const navWishlistBtn = document.querySelector('.nav-btn[data-page="wishlist"]');
+  const navNotesBtn = document.querySelector('.nav-btn[data-page="notes"]');
+
+  // заметки
+  const notesCard = document.getElementById("notes-card");
+  const notesNoPair = document.getElementById("notes-no-pair");
+  const notesGroup = document.getElementById("notes-group");
+  const notesListEl = document.getElementById("notes-list");
+  const notesEmptyEl = document.getElementById("notes-empty");
+  const notesAddForm = document.getElementById("notes-add-form");
+  const notesInput = document.getElementById("notes-input");
 
   document.querySelectorAll(".bottom-nav .nav-btn").forEach((btn) => {
   btn.addEventListener("click", () => haptic("select"));
@@ -429,6 +438,15 @@
     fitBlock(partnerListBlock);
   }
 
+  function updateNotesScrollHeight() {
+    if (!notesGroup) return;
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    const bottomNavHeight = bottomNav ? bottomNav.offsetHeight + 26 : 0;
+    const rect = notesGroup.getBoundingClientRect();
+    const freeHeight = viewportHeight - rect.top - bottomNavHeight - 16;
+    notesGroup.style.maxHeight = `${Math.max(140, Math.floor(freeHeight))}px`;
+  }
+
   // === STATE ====================================================
 
   let state = {
@@ -437,6 +455,7 @@
     partner: null,
     my_wishlist: [],
     partner_wishlist: [],
+    notes: [],
   };
 
   let sortField = "priority";
@@ -569,21 +588,20 @@
   // === ТАБЫ / НАВИГАЦИЯ =========================================
 
   function setPage(page) {
-    if (!pageMain || !pageWishlist || !navMainBtn || !navWishlistBtn) return;
+    if (!pageMain || !pageWishlist) return;
 
-    if (page === "wishlist") {
-      pageMain.classList.add("hidden");
-      pageWishlist.classList.remove("hidden");
-      navMainBtn.classList.remove("active");
-      navWishlistBtn.classList.add("active");
-    } else {
-      pageMain.classList.remove("hidden");
-      pageWishlist.classList.add("hidden");
-      navMainBtn.classList.add("active");
-      navWishlistBtn.classList.remove("active");
-    }
+    pageMain.classList.toggle("hidden", page !== "main");
+    pageWishlist.classList.toggle("hidden", page !== "wishlist");
+    if (pageNotes) pageNotes.classList.toggle("hidden", page !== "notes");
 
-    requestAnimationFrame(updateWishlistScrollHeights);
+    document.querySelectorAll(".bottom-nav .nav-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.page === page);
+    });
+
+    requestAnimationFrame(() => {
+      updateWishlistScrollHeights();
+      updateNotesScrollHeight();
+    });
   }
 
   if (navMainBtn) {
@@ -592,6 +610,10 @@
 
   if (navWishlistBtn) {
     navWishlistBtn.addEventListener("click", () => setPage("wishlist"));
+  }
+
+  if (navNotesBtn) {
+    navNotesBtn.addEventListener("click", () => setPage("notes"));
   }
 
   // свайп влево/вправо для смены страницы
@@ -631,8 +653,13 @@
       if (Math.abs(dx) < 60) return;
 
       const onMain = !pageMain.classList.contains("hidden");
+      const onWishlist = pageWishlist && !pageWishlist.classList.contains("hidden");
+      const onNotes = pageNotes && !pageNotes.classList.contains("hidden");
+
       if (dx < 0 && onMain) { haptic("select"); setPage("wishlist"); }
-      if (dx > 0 && !onMain) { haptic("select"); setPage("main"); }
+      else if (dx < 0 && onWishlist) { haptic("select"); setPage("notes"); }
+      else if (dx > 0 && onNotes) { haptic("select"); setPage("wishlist"); }
+      else if (dx > 0 && onWishlist) { haptic("select"); setPage("main"); }
     }, { passive: true });
   })();
 
@@ -680,6 +707,8 @@
       pairCard.classList.add("hidden");
       cloudCard.classList.add("hidden");
       wishlistCard.classList.add("hidden");
+      notesCard && notesCard.classList.add("hidden");
+      notesNoPair && notesNoPair.classList.remove("hidden");
       noPairCard.classList.remove("hidden");
       return;
     }
@@ -689,6 +718,8 @@
     pairCard.classList.remove("hidden");
     cloudCard.classList.remove("hidden");
     wishlistCard.classList.remove("hidden");
+    notesCard && notesCard.classList.remove("hidden");
+    notesNoPair && notesNoPair.classList.add("hidden");
 
     if (state.partner && state.partner.id) {
       const name = getPartnerDisplayName();
@@ -898,6 +929,53 @@
     requestAnimationFrame(updateWishlistScrollHeights);
   }
 
+  // === NOTES РЕНДЕР =============================================
+
+  function makeNoteItemHTML(note) {
+    const textHtml = sanitizeText(note.text || "");
+    const authorLabel = note.is_mine ? "Я" : getPartnerDisplayName();
+    const dateStr = note.created_at ? formatDate(note.created_at) : "";
+    const deleteReveal = note.is_mine
+      ? `<button class="wl-delete-reveal" type="button" aria-label="Удалить">✕</button>`
+      : "";
+
+    return `
+      <div class="wl-swipe-track">
+        <div class="wl-swipe-content">
+          <div class="note-main">
+            <div class="note-text">${textHtml}</div>
+            <div class="note-meta">
+              <span class="note-author-badge${note.is_mine ? " note-mine" : ""}">${authorLabel}</span>
+              <span class="note-date">${dateStr}</span>
+            </div>
+          </div>
+        </div>
+        ${deleteReveal}
+      </div>
+    `;
+  }
+
+  function renderNotes() {
+    if (!notesListEl || !notesEmptyEl) return;
+
+    notesListEl.innerHTML = "";
+    if (!state.notes || state.notes.length === 0) {
+      notesEmptyEl.classList.remove("hidden");
+    } else {
+      notesEmptyEl.classList.add("hidden");
+      state.notes.forEach((note) => {
+        const li = document.createElement("li");
+        li.className = "wl-item";
+        li.dataset.id = note.id;
+        li.innerHTML = makeNoteItemHTML(note);
+        if (note.is_mine) attachWishSwipe(li);
+        notesListEl.appendChild(li);
+      });
+    }
+
+    requestAnimationFrame(updateNotesScrollHeight);
+  }
+
   // === API-ХЕЛПЕР ===============================================
 
   async function apiPost(path, payload) {
@@ -942,6 +1020,7 @@
       state.partner = data.partner;
       state.my_wishlist = data.my_wishlist || [];
       state.partner_wishlist = data.partner_wishlist || [];
+      state.notes = data.notes || [];
 
       if (myListBlock && partnerListBlock) {
         myListBlock.classList.add("hidden");
@@ -950,6 +1029,7 @@
       renderTabs();
       renderPairBlock();
       renderWishlist();
+      renderNotes();
       renderTabs();
     } catch (e) {
       console.error(e);
@@ -1397,6 +1477,57 @@
       } catch (e) {
         console.error(e);
         showError("Ошибка удаления пары: " + e.message);
+      }
+    });
+  }
+
+  // === ЗАМЕТКИ =================================================
+
+  if (notesAddForm && notesInput) {
+    notesAddForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = notesInput.value.trim();
+      if (!text) return;
+
+      try {
+        const data = await apiPost("/api/notes/add", { user, text });
+        state.notes.unshift(data.note);
+        notesInput.value = "";
+        renderNotes();
+        haptic("success");
+      } catch (err) {
+        console.error(err);
+        showError("Не удалось добавить заметку: " + err.message);
+        haptic("error");
+      }
+    });
+  }
+
+  if (notesListEl) {
+    notesListEl.addEventListener("click", async (e) => {
+      if (!e.target.closest(".wl-delete-reveal")) return;
+      const li = e.target.closest("li");
+      if (!li) return;
+      const id = parseInt(li.dataset.id, 10);
+      if (!id) return;
+
+      const note = state.notes.find((n) => n.id === id);
+      const preview = note ? note.text.substring(0, 40) : "";
+      const track = li.querySelector(".wl-swipe-track");
+
+      if (!confirm(`Удалить заметку: «${preview}»?`)) {
+        if (track) { track.style.transition = "transform 0.22s ease"; track.style.transform = "translateX(0)"; }
+        li.classList.remove("wl-swiped");
+        return;
+      }
+
+      try {
+        await apiPost("/api/notes/delete", { user, note_id: id });
+        state.notes = state.notes.filter((n) => n.id !== id);
+        renderNotes();
+      } catch (err) {
+        console.error(err);
+        showError("Ошибка удаления: " + err.message);
       }
     });
   }

@@ -35,7 +35,7 @@ from tgbot.services import (  # type: ignore
     get_partner_alias_for_user,
     set_partner_alias_for_user,
 )
-from tgbot.db import fetchone, execute  # type: ignore
+from tgbot.db import fetchone, execute, execute_returning_one  # type: ignore
 from tgbot.config import BOT_USERNAME  # type: ignore
 
 
@@ -78,6 +78,16 @@ def serialize_wishlist_item(row: Dict[str, Any]) -> Dict[str, Any]:
         "url": row.get("url"),
         "is_done": bool(row.get("is_done")),
         "priority": row.get("priority") or "medium",
+        "created_at": serialize_date(row.get("created_at")),
+    }
+
+
+def serialize_note(row: Dict[str, Any], current_user_id: int) -> Dict[str, Any]:
+    return {
+        "id": row["id"],
+        "text": row["text"],
+        "author_user_id": row["author_user_id"],
+        "is_mine": row["author_user_id"] == current_user_id,
         "created_at": serialize_date(row.get("created_at")),
     }
 
@@ -195,6 +205,37 @@ def get_current_user_and_pair(payload: Dict[str, Any]):
     pair = get_pair_by_user(user_id)
 
     return user_id, pair, None, None
+
+def notify_partner_about_new_note(pair, user_id: int, text: str) -> None:
+    if pair["creator_user_id"] == user_id:
+        partner_user_id = pair["partner_user_id"]
+    else:
+        partner_user_id = pair["creator_user_id"]
+
+    if not partner_user_id:
+        return
+
+    partner = fetchone(
+        "SELECT telegram_id FROM users WHERE id = %s",
+        (partner_user_id,),
+    )
+    if not partner or not partner.get("telegram_id"):
+        return
+
+    tg_id = partner["telegram_id"]
+    preview = text[:100] + "…" if len(text) > 100 else text
+    safe_text = html.escape(preview, quote=False)
+
+    notif_text = (
+        "📝 <b>Новая совместная заметка!</b>\n\n"
+        f"{safe_text}"
+    )
+
+    try:
+        bot.send_message(tg_id, notif_text, parse_mode="HTML")
+    except Exception as e:
+        print(f"Failed to send note notification: {e}")
+
 
 def notify_partner_about_new_wish(pair, user_id: int, title: str) -> None:
     """
@@ -386,7 +427,12 @@ def api_init():
     cloud_url = pair.get("cloud_drive_url")
     partner_alias = get_partner_alias_for_user(pair, user_id)
 
-
+    # совместные заметки
+    notes_raw = fetchall(
+        "SELECT id, author_user_id, text, created_at FROM notes WHERE pair_id = %s ORDER BY created_at DESC",
+        (pair["id"],),
+    ) or []
+    notes = [serialize_note(n, user_id) for n in notes_raw]
 
     return jsonify(
         {
@@ -409,6 +455,7 @@ def api_init():
             else None,
             "my_wishlist": my_items,
             "partner_wishlist": partner_items,
+            "notes": notes,
         }
     )
 
@@ -739,6 +786,56 @@ def api_wishlist_clear():
     # )
 
     return jsonify({"ok": True})
+
+@app.post("/api/notes/add")
+def api_notes_add():
+    data = request.json or {}
+    text = (data.get("text") or "").strip()
+
+    if not text:
+        return jsonify({"ok": False, "error": "TEXT_REQUIRED"}), 400
+
+    user_id, pair, err_resp, err_code = get_current_user_and_pair(data)
+    if err_resp is not None:
+        return err_resp, err_code
+    if not pair:
+        return jsonify({"ok": False, "error": "NO_PAIR"}), 400
+
+    note = execute_returning_one(
+        "INSERT INTO notes (pair_id, author_user_id, text) VALUES (%s, %s, %s) RETURNING id, author_user_id, text, created_at",
+        (pair["id"], user_id, text),
+    )
+    note_serialized = serialize_note(note, user_id)
+
+    try:
+        notify_partner_about_new_note(pair, user_id, text)
+    except Exception as e:
+        print(f"Failed to notify partner about new note: {e}")
+
+    return jsonify({"ok": True, "note": note_serialized})
+
+
+@app.post("/api/notes/delete")
+def api_notes_delete():
+    data = request.json or {}
+    note_id = data.get("note_id")
+
+    if not isinstance(note_id, int):
+        return jsonify({"ok": False, "error": "NOTE_ID_REQUIRED"}), 400
+
+    user_id, pair, err_resp, err_code = get_current_user_and_pair(data)
+    if err_resp is not None:
+        return err_resp, err_code
+    if not pair:
+        return jsonify({"ok": False, "error": "NO_PAIR"}), 400
+
+    execute(
+        "DELETE FROM notes WHERE id = %s AND author_user_id = %s",
+        (note_id, user_id),
+    )
+
+    return jsonify({"ok": True})
+
 
 if __name__ == "__main__":
     # dev-режим

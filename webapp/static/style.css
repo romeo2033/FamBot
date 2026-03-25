@@ -1302,3 +1302,66 @@ body.theme-pink .anniversary-banner {
   background: linear-gradient(135deg, #ff2d55 0%, #ff6b9d 50%, #ffb3c6 100%);
   box-shadow: 0 4px 16px rgba(255, 45, 85, 0.35);
 }
+
+/* === ЗАМЕТКИ ================================================== */
+
+.notes-card {
+  padding-top: 12px;
+}
+
+.notes-header {
+  margin-bottom: 10px;
+}
+
+.notes-header h2 {
+  margin-bottom: 2px;
+}
+
+.notes-subtitle {
+  font-size: 13px;
+}
+
+.notes-empty {
+  font-size: 14px;
+  text-align: center;
+  padding: 16px 0 8px;
+}
+
+/* контент одной заметки */
+.note-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.note-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.note-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-author-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--text-muted);
+}
+
+.note-author-badge.note-mine {
+  color: var(--accent-strong);
+}
+
+.note-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
