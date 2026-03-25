@@ -343,6 +343,69 @@
   const addForm = document.getElementById("add-form");
   const titleInput = document.getElementById("title-input");
 
+  const faqBtn = document.getElementById("faq-btn");
+  const faqOverlay = document.getElementById("faq-overlay");
+  const faqSheet = faqOverlay && faqOverlay.querySelector(".faq-sheet");
+  const faqSheetHeader = document.getElementById("faq-sheet-header");
+
+  function openFaq() {
+    if (!faqOverlay || !faqSheet) return;
+    document.body.style.overflow = "hidden";
+    faqSheet.style.transition = "none";
+    faqSheet.style.transform = "translateY(100%)";
+    faqOverlay.classList.remove("hidden");
+    requestAnimationFrame(() => {
+      faqSheet.style.transition = "transform 0.3s ease";
+      faqSheet.style.transform = "translateY(0)";
+    });
+  }
+
+  function closeFaq() {
+    if (!faqOverlay || !faqSheet) return;
+    faqSheet.style.transition = "transform 0.3s ease";
+    faqSheet.style.transform = "translateY(100%)";
+    setTimeout(() => {
+      faqOverlay.classList.add("hidden");
+      document.body.style.overflow = "";
+    }, 300);
+  }
+
+  faqBtn && faqBtn.addEventListener("click", () => { haptic("light"); openFaq(); });
+  faqOverlay && faqOverlay.addEventListener("click", (e) => {
+    if (e.target === faqOverlay) closeFaq();
+  });
+
+  // свайп вниз за пальцем
+  if (faqSheetHeader && faqSheet) {
+    let startY = 0, lastT = 0;
+
+    faqSheetHeader.addEventListener("touchstart", (e) => {
+      startY = e.touches[0].clientY;
+      lastT = Date.now();
+      faqSheet.style.transition = "none";
+    }, { passive: true });
+
+    faqSheetHeader.addEventListener("touchmove", (e) => {
+      e.preventDefault();
+      const dy = e.touches[0].clientY - startY;
+      lastT = Date.now();
+      if (dy > 0) faqSheet.style.transform = `translateY(${dy}px)`;
+    }, { passive: false });
+
+    faqSheetHeader.addEventListener("touchend", (e) => {
+      const dy = e.changedTouches[0].clientY - startY;
+      const dt = Date.now() - lastT;
+      const velocity = dt > 0 ? dy / dt : 0;
+      if (dy > 120 || velocity > 0.5) {
+        haptic("light");
+        closeFaq();
+      } else {
+        faqSheet.style.transition = "transform 0.25s ease";
+        faqSheet.style.transform = "translateY(0)";
+      }
+    }, { passive: true });
+  }
+
   const deletePairBtn = document.getElementById("delete-pair-btn");
 
   const exportWishlistBtn = document.getElementById("export-wishlist-btn");
@@ -530,6 +593,48 @@
   if (navWishlistBtn) {
     navWishlistBtn.addEventListener("click", () => setPage("wishlist"));
   }
+
+  // свайп влево/вправо для смены страницы
+  (function () {
+    let startX = 0, startY = 0, dirLocked = null;
+
+    document.addEventListener("touchstart", (e) => {
+      // не перехватывать если FAQ открыт или свайп в элементе вишлиста или инпут
+      if (faqOverlay && !faqOverlay.classList.contains("hidden")) return;
+      if (e.target.closest("input, textarea, [contenteditable]")) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      dirLocked = null;
+    }, { passive: true });
+
+    document.addEventListener("touchmove", (e) => {
+      if (faqOverlay && !faqOverlay.classList.contains("hidden")) return;
+      if (dirLocked === "vertical") return;
+      if (e.target.closest(".wl-swipe-track")) return;
+
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+
+      if (dirLocked === null) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        dirLocked = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      }
+
+      if (dirLocked === "horizontal") e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener("touchend", (e) => {
+      if (dirLocked !== "horizontal") return;
+      if (faqOverlay && !faqOverlay.classList.contains("hidden")) return;
+
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) < 60) return;
+
+      const onMain = !pageMain.classList.contains("hidden");
+      if (dx < 0 && onMain) { haptic("select"); setPage("wishlist"); }
+      if (dx > 0 && !onMain) { haptic("select"); setPage("main"); }
+    }, { passive: true });
+  })();
 
   function renderTabs() {
     if (!tabMy || !tabPartner || !myListBlock || !partnerListBlock) return;
