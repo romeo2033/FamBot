@@ -543,6 +543,34 @@ def api_wishlist_set_link():
 
     return jsonify({"ok": True})
 
+@app.post("/api/wishlist/edit")
+def api_wishlist_edit():
+    """
+    Редактировать название своего желания.
+    JSON: { "user": {...}, "item_id": 123, "title": "Новое название" }
+    """
+    data = request.json or {}
+    item_id = data.get("item_id")
+    title = (data.get("title") or "").strip()
+
+    if not isinstance(item_id, int):
+        return jsonify({"ok": False, "error": "ITEM_ID_REQUIRED"}), 400
+    if not title:
+        return jsonify({"ok": False, "error": "TITLE_REQUIRED"}), 400
+
+    user_id, pair, err_resp, err_code = get_current_user_and_pair(data)
+    if err_resp is not None:
+        return err_resp, err_code
+    if not pair:
+        return jsonify({"ok": False, "error": "NO_PAIR"}), 400
+
+    execute(
+        "UPDATE wishlist_items SET title = %s WHERE id = %s AND owner_user_id = %s",
+        (title, item_id, user_id),
+    )
+
+    return jsonify({"ok": True})
+
 @app.post("/api/wishlist/send_to_bot")
 def api_wishlist_send_to_bot():
     data = request.json or {}

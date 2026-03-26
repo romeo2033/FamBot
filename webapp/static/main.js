@@ -618,21 +618,21 @@
 
   // свайп влево/вправо для смены страницы
   (function () {
-    let startX = 0, startY = 0, dirLocked = null;
+    let startX = 0, startY = 0, dirLocked = null, inWishList = false;
 
     document.addEventListener("touchstart", (e) => {
-      // не перехватывать если FAQ открыт или свайп в элементе вишлиста или инпут
       if (faqOverlay && !faqOverlay.classList.contains("hidden")) return;
       if (e.target.closest("input, textarea, [contenteditable]")) return;
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       dirLocked = null;
+      inWishList = !!(e.target.closest("#my-list-block, #partner-list-block"));
     }, { passive: true });
 
     document.addEventListener("touchmove", (e) => {
       if (faqOverlay && !faqOverlay.classList.contains("hidden")) return;
       if (dirLocked === "vertical") return;
-      if (e.target.closest(".wl-swipe-track")) return;
+      if (inWishList) return;
 
       const dx = e.touches[0].clientX - startX;
       const dy = e.touches[0].clientY - startY;
@@ -646,6 +646,7 @@
     }, { passive: false });
 
     document.addEventListener("touchend", (e) => {
+      if (inWishList) return;
       if (dirLocked !== "horizontal") return;
       if (faqOverlay && !faqOverlay.classList.contains("hidden")) return;
 
@@ -856,6 +857,12 @@
       ? `<button class="wish-add-link" type="button">Добавить ссылку</button>`
       : "";
 
+    const editPart = canEdit
+      ? hasLink
+        ? `<button class="wl-chat-btn wish-edit-btn" type="button">Изменить</button>`
+        : `<button class="wish-add-link wish-edit-btn" type="button">Редактировать имя</button>`
+      : "";
+
     const discussPart = discussUrl
       ? `<button class="wl-chat-btn" data-chat-url="${discussUrl}">Обсудить</button>`
       : "";
@@ -874,6 +881,7 @@
             </div>
             <div class="wl-actions">
               ${linkPart}
+              ${editPart}
               ${discussPart}
             </div>
           </div>
@@ -923,6 +931,7 @@
         li.dataset.id = item.id;
         li.innerHTML = makeWishlistItemHTML(item, false);
         partnerWishlistEl.appendChild(li);
+        attachTabSwipeOnly(li);
       });
     }
 
@@ -1099,12 +1108,60 @@
   });
 }
 
+  function attachTabSwipeOnly(li) {
+    const TAB_SWITCH_THRESHOLD =80;
+    let startX = 0, startY = 0, endX = 0, dirLocked = false, moved = false;
+
+    li.addEventListener("touchstart", (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      endX = startX;
+      dirLocked = false;
+      moved = false;
+    }, { passive: true });
+
+    li.addEventListener("touchmove", (e) => {
+      endX = e.touches[0].clientX;
+      if (!moved) {
+        const dx = Math.abs(endX - startX);
+        const dy = Math.abs(e.touches[0].clientY - startY);
+        if (dx < 5 && dy < 5) return;
+        dirLocked = dx > dy;
+        moved = true;
+      }
+    }, { passive: true });
+
+    li.addEventListener("touchend", () => {
+      if (!dirLocked) return;
+      const totalDx = endX - startX;
+      if (totalDx < -TAB_SWITCH_THRESHOLD) switchWishTab("left");
+      else if (totalDx > TAB_SWITCH_THRESHOLD) switchWishTab("right");
+    });
+  }
+
+  function switchWishTab(direction) {
+    if (!myListBlock || !partnerListBlock) return;
+    const onMyTab = !myListBlock.classList.contains("hidden");
+    if (direction === "left" && !onMyTab) {
+      haptic("select");
+      myListBlock.classList.remove("hidden");
+      partnerListBlock.classList.add("hidden");
+      renderTabs();
+    } else if (direction === "right" && onMyTab) {
+      haptic("select");
+      myListBlock.classList.add("hidden");
+      partnerListBlock.classList.remove("hidden");
+      renderTabs();
+    }
+  }
+
   // свайп-удаление желания
   function attachWishSwipe(li) {
     const track = li.querySelector(".wl-swipe-track");
     if (!track) return;
     const REVEAL_WIDTH = 68;
-    let startX = 0, startY = 0, currentX = 0, swiping = false, dirLocked = false;
+    const TAB_SWITCH_THRESHOLD = 110;
+    let startX = 0, startY = 0, currentX = 0, endX = 0, swiping = false, dirLocked = false;
 
     function snapOpen() {
       track.style.transition = "transform 0.22s ease";
@@ -1125,6 +1182,7 @@
       });
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
+      endX = startX;
       currentX = li.classList.contains("wl-swiped") ? -REVEAL_WIDTH : 0;
       swiping = false;
       dirLocked = false;
@@ -1132,7 +1190,8 @@
     }, { passive: true });
 
     li.addEventListener("touchmove", (e) => {
-      const dx = e.touches[0].clientX - startX;
+      endX = e.touches[0].clientX;
+      const dx = endX - startX;
       const dy = e.touches[0].clientY - startY;
       if (!dirLocked) {
         if (Math.abs(dy) > Math.abs(dx)) return;
@@ -1146,6 +1205,17 @@
 
     li.addEventListener("touchend", () => {
       if (!swiping) return;
+      const totalDx = endX - startX;
+      if (totalDx < -TAB_SWITCH_THRESHOLD) {
+        snapClose();
+        switchWishTab("left");
+        return;
+      }
+      if (totalDx > TAB_SWITCH_THRESHOLD) {
+        snapClose();
+        switchWishTab("right");
+        return;
+      }
       if (currentX < -REVEAL_WIDTH / 2) snapOpen();
       else snapClose();
     });
@@ -1189,6 +1259,18 @@
         return;
       }
 
+      // редактировать
+      if (e.target.classList.contains("wish-edit-btn")) {
+        const item = state.my_wishlist.find((i) => i.id === id);
+        if (!item) return;
+        if (item.url) {
+          showWishEditActionSheet(e.target, item);
+        } else {
+          await editWishTitle(item);
+        }
+        return;
+      }
+
       // добавить/обновить ссылку
       if (e.target.classList.contains("wish-add-link")) {
         const url = prompt("Вставьте ссылку на товар\nНапример: https://example.com");
@@ -1205,6 +1287,75 @@
         return;
       }
     });
+  }
+
+  // редактировать название желания
+  async function editWishTitle(item) {
+    const newTitle = prompt("Редактировать желание", item.title);
+    if (!newTitle || newTitle.trim() === item.title) return;
+    try {
+      await apiPost("/api/wishlist/edit", { user, item_id: item.id, title: newTitle.trim() });
+      item.title = newTitle.trim();
+      renderWishlist();
+    } catch (err) {
+      console.error(err);
+      showError("Ошибка редактирования: " + err.message);
+    }
+  }
+
+  // action sheet при наличии ссылки: изменить название или ссылку
+  function showWishEditActionSheet(btn, item) {
+    const existing = document.querySelector(".wl-edit-sheet");
+    if (existing) existing.remove();
+
+    const sheet = document.createElement("div");
+    sheet.className = "wl-edit-sheet";
+
+    const options = [
+      { label: "Изменить название", action: () => editWishTitle(item) },
+      { label: "Изменить ссылку",   action: async () => {
+        const url = prompt("Вставьте новую ссылку\nНапример: https://example.com", item.url || "");
+        if (!url) return;
+        try {
+          await apiPost("/api/wishlist/set_link", { user, item_id: item.id, url });
+          item.url = url;
+          renderWishlist();
+        } catch (err) {
+          console.error(err);
+          showError("Ошибка сохранения ссылки: " + err.message);
+        }
+      }},
+    ];
+
+    options.forEach((opt) => {
+      const row = document.createElement("div");
+      row.className = "wl-edit-sheet-row";
+      row.textContent = opt.label;
+      row.addEventListener("click", (e) => {
+        e.stopPropagation();
+        sheet.remove();
+        opt.action();
+      });
+      sheet.appendChild(row);
+    });
+
+    const rect = btn.getBoundingClientRect();
+    sheet.style.position = "fixed";
+    sheet.style.right = (window.innerWidth - rect.right) + "px";
+    sheet.style.top = (rect.bottom + 4) + "px";
+    sheet.style.zIndex = "9999";
+
+    document.body.appendChild(sheet);
+
+    setTimeout(() => {
+      const closeHandler = (ev) => {
+        if (!sheet.contains(ev.target)) {
+          sheet.remove();
+          document.removeEventListener("click", closeHandler, true);
+        }
+      };
+      document.addEventListener("click", closeHandler, true);
+    }, 0);
   }
 
   // выпадающий список приоритетов

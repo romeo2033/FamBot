@@ -823,6 +823,22 @@ body.keyboard-open .bottom-nav {
   gap: 10px;
 }
 
+.wl-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.wl-actions button {
+  text-align: center;
+  float: none;
+  width: 100%;
+  margin-right: 0;
+  box-sizing: border-box;
+}
+
 /* круглый индикатор слева */
 
 .wl-status-dot {
@@ -1169,6 +1185,30 @@ textarea {
   border-radius: 999px;
   flex-shrink: 0;
   display: inline-block;
+}
+
+/* === ACTION SHEET ДЛЯ РЕДАКТИРОВАНИЯ ЖЕЛАНИЯ =================== */
+
+.wl-edit-sheet {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  min-width: 170px;
+  overflow: hidden;
+}
+
+.wl-edit-sheet-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.wl-edit-sheet-row:active {
+  background: #f2f2f7;
 }
 
 /* === FAQ КНОПКА И МОДАЛ ======================================= */
